@@ -1,0 +1,21 @@
+{% load static %} <!-- This tells Django to load static files -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signup</title>
+    <link rel="stylesheet" href="{% static 'css/login_signup.css' %}"> <!-- Link to your CSS file -->
+</head>
+<body>
+    <div class="container">
+        <h2>Sign Up</h2>
+        <form method="POST">
+            {% csrf_token %}
+            {{ form.as_p }}  <!-- This will render your form fields -->
+            <button type="submit">Sign Up</button>
+        </form>
+    </div>
+</body>
+</html>

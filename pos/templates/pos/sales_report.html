@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Sales Report - Supermarket POS{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Sales Report</h1>
+
+    <!-- Sales Summary Cards -->
+    <div class="row">
+        <!-- Total Sales Today Card -->
+        <div class="col-md-6 mb-3">
+            <div class="card text-white bg-success">
+                <div class="card-header">Total Sales Today</div>
+                <div class="card-body">
+                    <h4 class="card-title">Tsh{{ total_sales_today|floatformat:2 }}</h4>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Sales This Month Card -->
+        <div class="col-md-6 mb-3">
+            <div class="card text-white bg-info">
+                <div class="card-header">Total Sales This Month</div>
+                <div class="card-body">
+                    <h4 class="card-title">Tsh{{ total_sales_month|floatformat:2 }}</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Sales Report Button -->
+    <div class="text-center mb-4">
+        <a href="{% url 'enhanced_sales_report' %}" class="btn btn-primary">
+            <i class="fas fa-chart-line"></i> View Enhanced Sales Report
+        </a>
+    </div>
+
+    <!-- Sales List Table -->
+    <h2 class="mt-4">Sales List</h2>
+    <table class="table table-striped table-hover">
+        <thead class="thead-dark">
+            <tr>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>Total Price</th>
+                <th>Sale Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sale in sales %}
+            <tr>
+                <td>{{ sale.product.name }}</td>
+                <td>{{ sale.quantity }}</td>
+                <td>Tsh{{ sale.total_price }}</td>
+                <td>{{ sale.date }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" class="text-center">No sales data available.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

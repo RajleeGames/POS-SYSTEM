@@ -1,0 +1,30 @@
+#wrapper {
+    display: flex;
+    flex-direction: row;
+  }
+  
+  #sidebar-wrapper {
+    width: 250px;
+    height: 100vh;
+    z-index: 1000;
+    background-color: #f8f9fa;
+    position: fixed;
+    transition: all 0.3s ease;
+  }
+  
+  #wrapper.toggled #sidebar-wrapper {
+    margin-left: -250px;
+  }
+  
+  #page-content-wrapper {
+    width: 100%;
+    overflow-x: hidden;
+    position: relative;
+    margin-left: 250px;
+    transition: all 0.3s ease;
+  }
+  
+  #wrapper.toggled #page-content-wrapper {
+    margin-left: 0;
+  }
+  

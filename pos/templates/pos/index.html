@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+
+{% block title %}Welcome to Supermarket POS{% endblock %}
+
+{% block content %}
+<div class="container text-center">
+    <h1 class="my-4">Hello, Welcome to Supermarket POS!</h1>
+    <a href="{% url 'pos' %}" class="btn btn-primary">Go to POS System</a>
+</div>
+{% endblock %}

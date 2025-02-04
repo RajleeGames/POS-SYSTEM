@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}Product List - Supermarket POS{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="my-4">Product List</h2>
+
+    {% if products %}
+        <ul class="list-group">
+            {% for product in products %}
+                <li class="list-group-item">
+                    <strong>{{ product.name }}</strong> - ${{ product.price }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p class="alert alert-warning">No products available.</p>
+    {% endif %}
+
+    <a href="{% url 'index' %}" class="btn btn-secondary mt-3">Back to Home</a>
+</div>
+{% endblock %}

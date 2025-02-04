@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - Supermarket POS{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h1 class="mt-4">Settings</h1>
+  <hr>
+  <p>Configure your application settings below:</p>
+  <form method="post" action="">
+    {% csrf_token %}
+    <div class="form-group">
+      <label for="site_name">Site Name</label>
+      <input type="text" class="form-control" id="site_name" name="site_name" placeholder="Enter Site Name" value="{{ settings.site_name|default:'Supermarket POS' }}">
+    </div>
+    <div class="form-group">
+      <label for="timezone">Timezone</label>
+      <select class="form-control" id="timezone" name="timezone">
+        <option value="UTC">UTC</option>
+        <option value="America/New_York">America/New_York</option>
+        <option value="Europe/London">Europe/London</option>
+        <!-- Add more timezones as needed -->
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="currency">Currency</label>
+      <input type="text" class="form-control" id="currency" name="currency" placeholder="Enter currency symbol" value="{{ settings.currency|default:'$' }}">
+    </div>
+    <button type="submit" class="btn btn-primary">Save Settings</button>
+  </form>
+</div>
+{% endblock %}

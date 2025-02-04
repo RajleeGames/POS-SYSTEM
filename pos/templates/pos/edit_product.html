@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Product: {{ product.name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="my-4">Edit Product: {{ product.name }}</h1>
+
+    <form method="POST" class="form">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-success">Save changes</button>
+        <a href="{% url 'product_list' %}" class="btn btn-secondary">Back to product list</a>
+    </form>
+</div>
+{% endblock %}

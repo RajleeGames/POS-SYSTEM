@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Product Search - Supermarket POS{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="my-4">Search for a Product</h2>
+
+    <!-- Search form -->
+    <input type="text" id="search-input" class="form-control mb-4" placeholder="Search for a product..." onkeyup="liveSearch()">
+
+    <!-- Results -->
+    <div id="product-results">
+        <!-- Dynamic product results will appear here -->
+    </div>
+</div>
+
+<script>
+    // Function to fetch search results via AJAX
+    function liveSearch() {
+        const query = document.getElementById("search-input").value;
+
+        if (query.length < 3) {  // Optional: only search if the query is longer than 2 characters
+            document.getElementById("product-results").innerHTML = '';
+            return;
+        }
+
+        // Send AJAX request
+        $.ajax({
+            url: "{% url 'search_product' %}",
+            data: {
+                'query': query
+            },
+            dataType: 'json',
+            success: function(data) {
+                let resultsHtml = '';
+                if (data.products.length > 0) {
+                    data.products.forEach(function(product) {
+                        resultsHtml += `<div class="product-item">
+                            <strong>${product.name}</strong> - Tsh${product.price}
+                            <button class="btn btn-success btn-sm">Add to Sale</button>
+                        </div>`;
+                    });
+                } else {
+                    resultsHtml = `<p>No products found.</p>`;
+                }
+
+                document.getElementById("product-results").innerHTML = resultsHtml;
+            },
+            error: function() {
+                document.getElementById("product-results").innerHTML = '<p>Error fetching products.</p>';
+            }
+        });
+    }
+</script>
+
+{% endblock %}

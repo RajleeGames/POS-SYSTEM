@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="dashboard-container container">
+  <!-- Title -->
+  <h1 class="text-center mb-4">POS SYSTEM</h1>
+  
+  <!-- Dashboard Heading -->
+  <h2 class="text-center mb-4">Cashier Dashboard</h2>
+
+  <!-- Display messages -->
+  {% if messages %}
+    <ul class="messages">
+      {% for message in messages %}
+        <li class="{{ message.tags }}">{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  <!-- Barcode Scanning / Quick Entry Section -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h3>Barcode Scanning / Quick Entry</h3>
+    </div>
+    <div class="card-body">
+      <div class="input-group mb-3">
+        <input type="text" id="barcodeInput" class="form-control" placeholder="Scan barcode here..." autofocus>
+        <div class="input-group-append">
+          <button class="btn btn-outline-secondary" type="button" onclick="lookupBarcode()">
+            <i class="fas fa-barcode"></i> Lookup
+          </button>
+        </div>
+      </div>
+      <div id="barcodeResult" class="mb-3 text-center"></div>
+    </div>
+  </div>
+
+  <!-- Sale Form Section -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h3>Make a Sale</h3>
+    </div>
+    <div class="card-body">
+      <!-- Product Search -->
+      <div class="input-group mb-3">
+        <input type="text" id="productSearch" class="form-control" placeholder="Search for a product..." aria-label="Search Product" onkeyup="filterProducts()">
+        <div class="input-group-append">
+          <button class="btn btn-outline-secondary" type="button" onclick="filterProducts()">
+            <i class="fas fa-search"></i>
+          </button>
+        </div>
+      </div>
+      
+      <form method="post" action="{% url 'cashier_dashboard' %}">
+        {% csrf_token %}
+        <div class="form-group">
+          <label for="product">Product:</label>
+          <select name="product" id="product" class="form-control" required>
+            <option value="">-- Select Product --</option>
+            {% for product in products %}
+              <option value="{{ product.id }}">
+                {{ product.name }} - ${{ product.price }} (Stock: {{ product.stock }})
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="quantity">Quantity:</label>
+          <input type="number" name="quantity" id="quantity" class="form-control" min="1" value="1" required>
+        </div>
+
+        <div class="form-group">
+          <label for="customer">Customer:</label>
+          <select name="customer" id="customer" class="form-control">
+            <option value="">Walk-in Customer</option>
+            {% for customer in customers %}
+              <option value="{{ customer.id }}">{{ customer.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="payment_method">Payment Method:</label>
+          <select name="payment_method" id="payment_method" class="form-control">
+            <option value="cash">Cash</option>
+            <option value="card">Card</option>
+            <option value="mobile_money">Mobile Money</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">Complete Sale</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Recent Transactions Section -->
+  <div class="card">
+    <div class="card-header">
+      <h3>Recent Transactions</h3>
+    </div>
+    <div class="card-body">
+      <table class="table table-sm table-hover">
+        <thead class="thead-light">
+          <tr>
+            <th>Date</th>
+            <th>Products</th>
+            <th>Qty</th>
+            <th>Total</th>
+            <th>Payment</th>
+            <th>Receipt</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sale in recent_sales %}
+          <tr>
+            <td>{{ sale.date|date:"Y-m-d H:i" }}</td>
+            <td>
+              {% for item in sale.items.all %}
+                {{ item.product.name }}<br>
+              {% endfor %}
+            </td>
+            <td>
+              {% for item in sale.items.all %}
+                {{ item.quantity }}<br>
+              {% endfor %}
+            </td>
+            <td>
+              {% for item in sale.items.all %}
+                ${{ item.total_price }}<br>
+              {% endfor %}
+            </td>
+            <td>{{ sale.payment_method|capfirst }}</td>
+            <td>
+              <a href="{% url 'receipt_view' sale.id %}" target="_blank" class="btn btn-sm btn-outline-primary">
+                Print
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="text-center">No transactions yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- JavaScript for Barcode Scanning and Product Filtering -->
+<script>
+  // Function to look up a product by barcode via AJAX
+  function lookupBarcode() {
+    var barcode = document.getElementById("barcodeInput").value.trim();
+    if (!barcode) return;
+    fetch("{% url 'lookup_barcode' %}?barcode=" + encodeURIComponent(barcode))
+      .then(response => response.json())
+      .then(data => {
+        var resultDiv = document.getElementById("barcodeResult");
+        if (data.status === 'success') {
+          resultDiv.style.color = "green";
+          resultDiv.innerText = "Product Found: " + data.product.name + " - $" + data.product.price;
+          // Auto-select the found product in the product dropdown
+          var productSelect = document.getElementById("product");
+          for (var i = 0; i < productSelect.options.length; i++) {
+            if (productSelect.options[i].value == data.product.id) {
+              productSelect.selectedIndex = i;
+              break;
+            }
+          }
+        } else {
+          resultDiv.style.color = "red";
+          resultDiv.innerText = data.message;
+        }
+        // Clear the barcode input after lookup
+        document.getElementById("barcodeInput").value = "";
+      })
+      .catch(error => console.error("Error:", error));
+  }
+
+  // Allow barcode lookup on pressing the Enter key
+  document.getElementById("barcodeInput").addEventListener("keydown", function(e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      lookupBarcode();
+    }
+  });
+
+  // Function to filter the product dropdown based on search input
+  function filterProducts() {
+    var input = document.getElementById("productSearch"),
+        filter = input.value.toUpperCase(),
+        select = document.getElementById("product"),
+        options = select.getElementsByTagName("option");
+    for (var i = 0; i < options.length; i++) {
+      // Always show the first default option
+      if (i === 0) {
+        options[i].style.display = "";
+        continue;
+      }
+      var txtValue = options[i].textContent || options[i].innerText;
+      options[i].style.display = (txtValue.toUpperCase().indexOf(filter) > -1) ? "" : "none";
+    }
+  }
+</script>
+{% endblock %}
