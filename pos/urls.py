@@ -1,6 +1,11 @@
 from django.urls import path
 from . import views
 from .views import get_product_details
+from django.conf import settings
+from django.conf.urls.static import static
+from .views import product_list, contacts_list
+from .views import stock_movement_list
+
 
 urlpatterns = [
     path('', views.index, name='index'),
@@ -21,4 +26,13 @@ urlpatterns = [
     path('lookup_barcode/', views.lookup_by_barcode, name='lookup_barcode'),
     path('search_products/', views.search_products, name='search_products'),
     path('get_product_details/', get_product_details, name='get_product_details'),
+    path('products/', product_list, name='product_list'),
+    path('contacts/', contacts_list, name='contacts_list'),
+    path('contacts/add/', views.add_contact, name='add_contact'),
+    path('contacts/edit/<int:pk>/', views.edit_contact, name='edit_contact'),
+    path('contacts/delete/<int:pk>/', views.delete_contact, name='delete_contact'),
+    path('stock-movement/', stock_movement_list, name='stock_movement_list'),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

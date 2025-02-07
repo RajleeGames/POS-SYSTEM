@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'pos',
+    'accounts',
 ]
 
 MIDDLEWARE = [
@@ -112,7 +113,7 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
+    os.path.join(BASE_DIR, 'pos/static'),
 ]
 
 # Add this line
@@ -127,3 +128,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 APPEND_SLASH = True
 
 LOGIN_REDIRECT_URL = 'cashier_dashboard'
+
+
+
+# Media URL and Root configurations
+MEDIA_URL = '/media/'  # URL to access the media files (e.g., http://localhost:8000/media/)
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Path where files will be saved (your project's media folder)

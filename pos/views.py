@@ -8,9 +8,11 @@ from django.contrib.auth import logout
 from django.utils import timezone
 from reportlab.pdfgen import canvas
 import json
-
+from .models import  Contact
 from .models import Sale, SaleItem, Customer, Product
 from .forms import CustomerForm, ProductForm
+from .forms import ContactForm
+from .models import StockMovement
 
 # -------------------------
 # Receipt Views
@@ -153,7 +155,7 @@ def product_list(request):
     List all products.
     """
     products = Product.objects.all()
-    return render(request, 'product_list.html', {'products': products})
+    return render(request, 'pos/product_list.html', {'products': products})
 
 
 def view_product(request, product_id):
@@ -610,10 +612,10 @@ def enhanced_sales_report(request):
     Render an enhanced sales report with data for daily, weekly, monthly, and yearly sales.
     (Replace the sample data below with actual queries as needed.)
     """
-    daily_sales = [{"day": "2025-02-01", "total": 150.00}, {"day": "2025-02-02", "total": 200.00}]
-    weekly_sales = [{"week": "2025-W05", "total": 1200.00}, {"week": "2025-W06", "total": 1500.00}]
-    monthly_sales = [{"month": "2025-01", "total": 4500.00}, {"month": "2025-02", "total": 5200.00}]
-    yearly_sales = [{"year": "2024", "total": 55000.00}, {"year": "2025", "total": 60000.00}]
+    daily_sales = [{"day": "2025-02-01", "total": 150000.00}, {"day": "2025-02-02", "total": 200000.00}, {"day": "2025-02-03", "total": 270000.00}, {"day": "2025-02-04", "total": 300000.00}, {"day": "2025-02-05", "total": 400000.00},{"day": "2025-02-06", "total": 340000.00},{"day": "2025-02-07", "total": 500000.00}]
+    weekly_sales = [{"week": "2025-W01", "total": 550000.00}, {"week": "2025-W02", "total": 760000.00}, {"week": "2025-W03", "total": 670000.00},{"week": "2025-W04", "total": 531500.00},{"week": "2025-W05", "total": 430000.00},{"week": "2025-W06", "total": 500000.00},{"week": "2025-W07", "total": 450000.00},{"week": "2025-W08", "total": 250000.00}]
+    monthly_sales = [{"month": "2024-01", "total": 5460800.00}, {"month": "2024-02", "total": 4085800.00},{"month": "2024-03", "total": 1678200.00},{"month": "2024-04", "total": 3335200.00},{"month": "2024-05", "total": 3008200.00},{"month": "2024-06", "total": 4000000.00},{"month": "2025-07", "total": 3075200.00},{"month": "2024-08", "total": 2455200.00},{"month": "2024-09", "total": 2455200.00},{"month": "2024-10", "total": 2455200.00},{"month": "2024-11", "total": 2455200.00},{"month": "2024-12", "total": 2455200.00},{"month": "2025-01", "total": 2455200.00},{"month": "2025-02", "total": 2455200.00},]
+    yearly_sales = [{"year": "2024", "total": 214355000.00}, {"year": "2025", "total": 63460000.00}]
 
     context = {
         "daily_sales_json": json.dumps(daily_sales),
@@ -621,6 +623,7 @@ def enhanced_sales_report(request):
         "monthly_sales_json": json.dumps(monthly_sales),
         "yearly_sales_json": json.dumps(yearly_sales),
     }
+    
     return render(request, "pos/enhanced_sales_report.html", context)
 
 # -------------------------
@@ -650,3 +653,48 @@ def get_product_details(request):
         })
     except Product.DoesNotExist:
         return JsonResponse({"success": False, "message": "Product not found"})
+
+
+# your_app_name/views.py
+
+
+
+def contacts_list(request):
+    contacts = Contact.objects.all().order_by('-created_at')
+    return render(request, 'pos/contacts_list.html', {'contacts': contacts})
+
+def add_contact(request):
+    if request.method == 'POST':
+        form = ContactForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('contacts_list')
+    else:
+        form = ContactForm()
+    return render(request, 'pos/contact_form.html', {'form': form, 'title': 'Add Contact'})
+
+def edit_contact(request, pk):
+    contact = get_object_or_404(Contact, pk=pk)
+    if request.method == 'POST':
+        form = ContactForm(request.POST, instance=contact)
+        if form.is_valid():
+            form.save()
+            return redirect('contacts_list')
+    else:
+        form = ContactForm(instance=contact)
+    return render(request, 'pos/contact_form.html', {'form': form, 'title': 'Edit Contact'})
+
+def delete_contact(request, pk):
+    contact = get_object_or_404(Contact, pk=pk)
+    if request.method == 'POST':
+        contact.delete()
+        return redirect('contacts_list')
+    return render(request, 'pos/delete_contact.html', {'contact': contact})
+
+
+
+
+def stock_movement_list(request):
+    movements = StockMovement.objects.all().order_by('-timestamp')
+    return render(request, 'pos/stock_movement.html', {'movements': movements})
+

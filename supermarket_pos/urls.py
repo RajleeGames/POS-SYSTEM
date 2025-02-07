@@ -4,6 +4,8 @@ from django.urls import path, include
 from django.contrib.auth import views as auth_views  # Ensure this line is there
 from pos import views
 
+
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('pos.urls')),  # Include the pos.urls
@@ -14,4 +16,5 @@ urlpatterns = [
     path('sale-success/', views.sale_success, name='sale_success_url'),
     path('make_sale/', views.make_sale, name='make_sale'),
     path('add_to_sale/<int:product_id>/', views.add_to_sale, name='add_to_sale'),
+    path('accounts/', include('accounts.urls')),  # Ensure this line exists
 ]

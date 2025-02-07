@@ -42,10 +42,13 @@
       <h3>Make a Sale</h3>
     </div>
     <div class="card-body">
-      <!-- Product Search -->
+      <!-- Product Search with Voice Integration -->
       <div class="input-group mb-3">
         <input type="text" id="productSearch" class="form-control" placeholder="Search for a product..." aria-label="Search Product" onkeyup="filterProducts()">
         <div class="input-group-append">
+          <button class="btn btn-outline-secondary" type="button" id="voice-btn">
+            <i class="fas fa-microphone"></i>
+          </button>
           <button class="btn btn-outline-secondary" type="button" onclick="filterProducts()">
             <i class="fas fa-search"></i>
           </button>
@@ -60,7 +63,7 @@
             <option value="">-- Select Product --</option>
             {% for product in products %}
               <option value="{{ product.id }}">
-                {{ product.name }} - ${{ product.price }} (Stock: {{ product.stock }})
+                {{ product.name }} - Tsh{{ product.price }} (Stock: {{ product.stock }})
               </option>
             {% endfor %}
           </select>
@@ -149,7 +152,7 @@
   </div>
 </div>
 
-<!-- JavaScript for Barcode Scanning and Product Filtering -->
+<!-- JavaScript for Barcode Scanning, Product Filtering, and Voice Search Integration -->
 <script>
   // Function to look up a product by barcode via AJAX
   function lookupBarcode() {
@@ -161,7 +164,7 @@
         var resultDiv = document.getElementById("barcodeResult");
         if (data.status === 'success') {
           resultDiv.style.color = "green";
-          resultDiv.innerText = "Product Found: " + data.product.name + " - $" + data.product.price;
+          resultDiv.innerText = "Product Found: " + data.product.name + " - Tsh" + data.product.price;
           // Auto-select the found product in the product dropdown
           var productSelect = document.getElementById("product");
           for (var i = 0; i < productSelect.options.length; i++) {
@@ -203,6 +206,43 @@
       var txtValue = options[i].textContent || options[i].innerText;
       options[i].style.display = (txtValue.toUpperCase().indexOf(filter) > -1) ? "" : "none";
     }
+  }
+
+  // Voice Search Integration for the Product Search Field
+  if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    
+    const productSearchInput = document.getElementById("productSearch");
+    const voiceBtn = document.getElementById("voice-btn");
+    
+    voiceBtn.addEventListener("click", () => {
+      recognition.start();
+      voiceBtn.innerHTML = '<i class="fas fa-microphone-slash"></i>';
+    });
+    
+    recognition.addEventListener("result", (event) => {
+      const transcript = event.results[0][0].transcript;
+      productSearchInput.value = transcript;
+      voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+      // Optionally trigger filtering automatically after voice input:
+      filterProducts();
+    });
+    
+    recognition.addEventListener("end", () => {
+      voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+    });
+    
+    recognition.addEventListener("error", (event) => {
+      console.error("Voice recognition error:", event.error);
+      voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+    });
+  } else {
+    console.warn("Speech Recognition API not supported in this browser.");
   }
 </script>
 {% endblock %}

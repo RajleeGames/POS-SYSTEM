@@ -39,6 +39,7 @@ class Product(models.Model):
     )
     description = models.TextField(blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
+    image = models.ImageField(upload_to='products/', blank=True, null=True)
     stock = models.PositiveIntegerField(default=0)
     barcode = models.CharField(max_length=50, unique=True, blank=True)
     supplier = models.ForeignKey(
@@ -147,17 +148,32 @@ class Sale(models.Model):
 
 
 # Stock Movement Model
+
 class StockMovement(models.Model):
+    MOVEMENT_TYPES = [
+        ('IN', 'Stock In'),
+        ('OUT', 'Stock Out'),
+        ('ADJUST', 'Stock Adjustment'),
+    ]
+
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.IntegerField()
-    movement_type = models.CharField(
-        max_length=50, choices=[('in', 'Stock In'), ('out', 'Stock Out')]
-    )
-    date = models.DateTimeField(auto_now_add=True)
+    movement_type = models.CharField(max_length=10, choices=MOVEMENT_TYPES)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    remarks = models.TextField(blank=True, null=True)
 
-    @property
-    def total_price(self):
-        return self.product.price * self.quantity
+    def save(self, *args, **kwargs):
+        # Update stock based on movement type
+        if self.movement_type == 'IN':
+            self.product.stock += self.quantity
+        elif self.movement_type == 'OUT':
+            self.product.stock -= self.quantity
+        elif self.movement_type == 'ADJUST':
+            self.product.stock = self.quantity  # Direct adjustment
+        
+        self.product.save()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.product.name} - {self.movement_type} ({self.quantity})"
@@ -187,4 +203,15 @@ class SaleItem(models.Model):
     total_price = models.DecimalField(max_digits=8, decimal_places=2)
 
     def __str__(self):
-        return f"{self.product.name} - Qty: {self.quantity} - Total: ${self.total_price}"
+        return f"{self.product.name} - Qty: {self.quantity} - Total: Tsh{self.total_price}"
+
+
+class Contact(models.Model):
+    name = models.CharField(max_length=200)
+    email = models.EmailField()
+    phone = models.CharField(max_length=20, blank=True)
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name

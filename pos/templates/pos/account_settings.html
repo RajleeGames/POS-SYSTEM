@@ -1,0 +1,93 @@
+<!-- templates/accounts/account_settings.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="container mt-4">
+    <h1>Account Settings</h1>
+    <p>Manage your account details here. Make sure to keep your information up to date for better security and user experience.</p>
+
+    <!-- Update Profile Information -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="card-title">Profile Information</h5>
+      </div>
+      <div class="card-body">
+        <form method="POST" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" class="form-control" id="username" name="username" value="{{ user.username }}" required>
+          </div>
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
+          </div>
+          <div class="form-group">
+            <label for="profile_picture">Profile Picture</label>
+            <input type="file" class="form-control-file" id="profile_picture" name="profile_picture">
+          </div>
+          <button type="submit" class="btn btn-primary">Update Profile</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Change Password Section -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="card-title">Change Password</h5>
+      </div>
+      <div class="card-body">
+        <form method="POST">
+          {% csrf_token %}
+          <div class="form-group">
+            <label for="current_password">Current Password</label>
+            <input type="password" class="form-control" id="current_password" name="current_password" required>
+          </div>
+          <div class="form-group">
+            <label for="new_password">New Password</label>
+            <input type="password" class="form-control" id="new_password" name="new_password" required>
+          </div>
+          <div class="form-group">
+            <label for="confirm_new_password">Confirm New Password</label>
+            <input type="password" class="form-control" id="confirm_new_password" name="confirm_new_password" required>
+          </div>
+          <button type="submit" class="btn btn-success">Change Password</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Email Notifications Settings -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="card-title">Email Notifications</h5>
+      </div>
+      <div class="card-body">
+        <form method="POST">
+          {% csrf_token %}
+          <div class="form-group">
+            <label for="email_notifications">Receive Email Notifications</label>
+            <select class="form-control" id="email_notifications" name="email_notifications">
+              <option value="yes" {% if user.profile.email_notifications == 'yes' %}selected{% endif %}>Yes</option>
+              <option value="no" {% if user.profile.email_notifications == 'no' %}selected{% endif %}>No</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-info">Save Preferences</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Deactivate Account Section -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="card-title text-danger">Deactivate Account</h5>
+      </div>
+      <div class="card-body">
+        <p class="text-danger">Deactivating your account will make it inaccessible, but your data will remain in our records.</p>
+        <form method="POST">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">Deactivate Account</button>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}

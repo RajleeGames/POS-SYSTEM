@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <h2>Stock Movement</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>Type</th>
+                <th>Timestamp</th>
+                <th>User</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for movement in movements %}
+            <tr>
+                <td>{{ movement.product.name }}</td>
+                <td>{{ movement.quantity }}</td>
+                <td>{{ movement.get_movement_type_display }}</td>
+                <td>{{ movement.timestamp }}</td>
+                <td>{{ movement.user.username }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

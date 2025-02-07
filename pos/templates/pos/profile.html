@@ -1,0 +1,57 @@
+<!-- templates/accounts/profile.html -->
+
+
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+  <div class="container mt-4">
+    <h1>User Profile</h1>
+    <p>Welcome, {{ request.user.username }}!</p>
+
+    <!-- Profile Information Section -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="card-title">Profile Information</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-4">
+            <!-- Display Profile Picture if it exists -->
+            {% if request.user.profile.profile_picture %}
+              <img src="{{ request.user.profile.profile_picture.url }}" class="img-fluid rounded-circle" alt="Profile Picture" style="max-width: 150px;">
+            {% else %}
+              <img src="{% static 'default-profile.png' %}" class="img-fluid rounded-circle" alt="Default Profile Picture" style="max-width: 150px;">
+            {% endif %}
+          </div>
+          <div class="col-md-8">
+            <ul>
+              <li><strong>Username:</strong> {{ request.user.username }}</li>
+              <li><strong>Email:</strong> {{ request.user.email }}</li>
+              <li><strong>First Name:</strong> {{ request.user.first_name }}</li>
+              <li><strong>Last Name:</strong> {{ request.user.last_name }}</li>
+              <li><strong>Member Since:</strong> {{ request.user.date_joined|date:"F d, Y" }}</li>
+            </ul>
+          </div>
+        </div>
+        <a href="{% url 'account_settings' %}" class="btn btn-warning mt-4">Edit Profile</a>
+      </div>
+    </div>
+
+    <!-- Recent Activity Section (Optional) -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="card-title">Recent Activity</h5>
+      </div>
+      <div class="card-body">
+        <p>You can list recent actions here, such as orders made, products added, etc.</p>
+        <!-- Example placeholder for recent activity -->
+        <ul>
+          <li>Purchased Item XYZ on 2025-02-01</li>
+          <li>Updated profile picture on 2025-02-02</li>
+          <li>Changed password on 2025-02-03</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+{% endblock %}

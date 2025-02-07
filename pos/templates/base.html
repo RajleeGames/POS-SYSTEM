@@ -50,7 +50,7 @@
     .sidebar-header {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-start;
       padding: 15px 20px;
       background: #2980b9;
     }
@@ -65,6 +65,13 @@
       font-size: 1.2rem;
       cursor: pointer;
       outline: none;
+      margin-right: 10px;
+    }
+    /* Logo styling for the title area in the sidebar header */
+    .pos-logo {
+      max-width: 60px;
+      height: auto;
+      margin-right: 20px;
     }
     .sidebar-nav {
       list-style: none;
@@ -224,15 +231,16 @@
         <button id="toggle-btn" class="toggle-btn">
           <i class="fas fa-bars"></i>
         </button>
-        <span class="title">POS System</span>
-        
+        <!-- Logo added in the header -->
+        <img src="{% static 'images/pos%20logo.png' %}" alt="POS Logo" class="pos-logo">
+        <span class="title">POS</span>
       </div>
       <nav class="sidebar-nav">
         <a href="{% url 'cashier_dashboard' %}">
           <i class="fas fa-tachometer-alt"></i>
           <span class="menu-text">Dashboard</span>
         </a>
-        <a href="{% url 'sales_history' %}">
+        <a href="{% url 'sales_history' %}">                       
           <i class="fas fa-history"></i>
           <span class="menu-text">Sales History</span>
         </a>
@@ -243,6 +251,14 @@
         <a href="{% url 'enhanced_sales_report' %}">
           <i class="fas fa-chart-pie"></i>
           <span class="menu-text">Enhanced Report</span>
+        </a>
+        <a href="{% url 'product_list' %}">
+          <i class="fas fa-boxes"></i>
+          <span class="menu-text">Product List</span>
+        </a>
+        <a href="{% url 'contacts_list' %}">
+          <i class="fas fa-address-book"></i>
+          <span class="menu-text">Contacts</span>
         </a>
         <a href="{% url 'settings' %}">
           <i class="fas fa-cog"></i>
@@ -292,8 +308,8 @@
             <span>{{ user.username }}</span>
           </a>
           <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown">
-            <a class="dropdown-item" href="#">Profile</a>
-            <a class="dropdown-item" href="#">Account Settings</a>
+            <a class="dropdown-item" href="{% url 'profile' %}">Profile</a>
+            <a class="dropdown-item" href="{% url 'account_settings' %}">Account Settings</a>
             <div class="dropdown-divider"></div>
             <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
           </div>

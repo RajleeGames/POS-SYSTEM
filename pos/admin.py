@@ -29,5 +29,11 @@ admin.site.register(Supplier)
 admin.site.register(Product, ProductAdmin)
 admin.site.register(Discount)
 admin.site.register(Sale, SaleAdmin)
-admin.site.register(StockMovement)
 admin.site.register(Customer, CustomerAdmin)
+
+
+@admin.register(StockMovement)
+class StockMovementAdmin(admin.ModelAdmin):
+    list_display = ('product', 'quantity', 'movement_type', 'timestamp', 'user')
+    list_filter = ('movement_type', 'timestamp')
+    search_fields = ('product__name', 'product__sku', 'user__username')
