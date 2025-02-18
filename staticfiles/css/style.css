@@ -1,0 +1,51 @@
+/* style.css */
+body {
+    background-color: #f8f9fa;
+}
+
+h1 {
+    color: #343a40;
+}
+
+.navbar-brand {
+    font-weight: bold;
+}
+
+.list-group-item {
+    transition: transform 0.2s ease-in-out;
+}
+
+.list-group-item:hover {
+    transform: scale(1.02);
+}
+
+/* static/css/style.css */
+
+body {
+    background: #f0f2f5;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.container {
+    background: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+h1 {
+    color: #333;
+}
+
+.list-group-item {
+    transition: background 0.2s ease;
+}
+
+.list-group-item:hover {
+    background: #f8f9fa;
+}
+
+/* Form input styling (optional customization) */
+.form-control {
+    border-radius: 4px;
+}
