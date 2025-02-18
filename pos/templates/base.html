@@ -118,6 +118,21 @@
       white-space: nowrap;
     }
     
+    /* Online Indicator */
+    .online-indicator {
+      display: inline-block;
+      width: 9px;
+      height: 9px;
+      background-color: #28a745; /* green dot */
+      border-radius: 50%;
+      margin-left: 5px;
+    }
+    .online-text {
+      font-size: 0.75rem;
+      color: #28a745;
+      margin-left: 5px;
+    }
+    
     /* Content Area */
     #content {
       margin-left: 220px;
@@ -148,6 +163,15 @@
     }
     .user-dropdown i {
       font-size: 1.6rem;
+      margin-right: 5px;
+    }
+    
+    /* Profile Image in Navbar */
+    .profile-img {
+      width: 30px;
+      height: 30px;
+      object-fit: cover;
+      border-radius: 50%;
       margin-right: 5px;
     }
     
@@ -221,6 +245,47 @@
     body.dark-theme .dropdown-item {
       color: #ecf0f1;
     }
+    
+    /* Sale Messages Styles */
+    .messages {
+      list-style: none;
+      padding: 0;
+      margin: 20px auto;
+      max-width: 500px;
+    }
+    .messages li {
+      padding: 12px 20px;
+      margin-bottom: 15px;
+      border-radius: 4px;
+      font-size: 1rem;
+      text-align: center;
+      font-weight: bold;
+      animation: fadeIn 0.5s ease;
+    }
+    .messages li.success {
+      background-color: #d4edda;
+      border-left: 6px solid #28a745;
+      color: #155724;
+    }
+    .messages li.error {
+      background-color: #f8d7da;
+      border-left: 6px solid #dc3545;
+      color: #721c24;
+    }
+    .messages li.warning {
+      background-color: #fff3cd;
+      border-left: 6px solid #ffc107;
+      color: #856404;
+    }
+    .messages li.info {
+      background-color: #d1ecf1;
+      border-left: 6px solid #17a2b8;
+      color: #0c5460;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
   </style>
 </head>
 <body>
@@ -271,9 +336,19 @@
       </nav>
     </div>
     <div class="sidebar-footer">
-      <i class="fas fa-user-circle"></i>
+      {% if user.is_authenticated and user.profile.profile_picture %}
+        <img src="{{ user.profile.profile_picture.url }}" alt="Profile Picture" class="profile-img" style="width:40px; height:40px; border-radius:50%; margin-right:10px;">
+      {% else %}
+        <i class="fas fa-user-circle" style="font-size:1.6rem; margin-right:10px;"></i>
+      {% endif %}
       <div class="user-info">
-        <span>{{ user.username }}</span>
+        <span>
+          {{ user.username }}
+          {% if user.is_authenticated %}
+            <span class="online-indicator"></span>
+            <span class="online-text">Online</span>
+          {% endif %}
+        </span>
         <small>{{ user.get_full_name }}</small>
       </div>
     </div>
@@ -304,7 +379,11 @@
         </div>
         <div class="user-dropdown dropdown">
           <a class="nav-link dropdown-toggle" href="#" id="userDropdown" data-toggle="dropdown">
-            <i class="fas fa-user-circle"></i>
+            {% if user.is_authenticated and user.profile.profile_picture %}
+              <img src="{{ user.profile.profile_picture.url }}" alt="Profile Picture" class="profile-img">
+            {% else %}
+              <i class="fas fa-user-circle"></i>
+            {% endif %}
             <span>{{ user.username }}</span>
           </a>
           <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown">
