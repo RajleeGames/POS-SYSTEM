@@ -1,179 +1,128 @@
-/* Reset some default styles */
+/* Global Styles */
 * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-  }
-  
-  /* Set a pleasant background color or image */
-  body {
-    background-color: #f0f2f5;
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    color: #333;
-    line-height: 1.6;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-  }
-  
-  /* Center container for the form */
-  .container {
-    background: #fff;
-    padding: 2rem;
-    max-width: 400px;
-    width: 100%;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    margin: 1rem;
-  }
-  
-  /* Headings styling */
-  h2 {
-    text-align: center;
-    margin-bottom: 1.5rem;
-    font-size: 1.75rem;
-    color: #444;
-  }
-  
-  /* Form fields styling */
-  form p {
-    margin-bottom: 1rem;
-  }
-  
-  form label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: bold;
-    font-size: 0.9rem;
-    color: #555;
-  }
-  
-  form input[type="text"],
-  form input[type="email"],
-  form input[type="password"],
-  form input[type="number"],
-  form input[type="url"],
-  form input[type="tel"],
-  form textarea,
-  form select {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 1rem;
-    transition: border-color 0.3s ease;
-  }
-  
-  form input[type="text"]:focus,
-  form input[type="email"]:focus,
-  form input[type="password"]:focus,
-  form textarea:focus,
-  form select:focus {
-    border-color: #007bff;
-    outline: none;
-  }
-  
-  /* Button styling */
-  button[type="submit"] {
-    width: 100%;
-    padding: 0.75rem;
-    background-color: #007bff;
-    border: none;
-    color: #fff;
-    font-size: 1rem;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    margin-top: 1rem;
-  }
-  
-  button[type="submit"]:hover {
-    background-color: #0056b3;
-  }
-  
-  /* Optional: Add some spacing for form elements if rendered with <p> tags */
-  form p {
-    margin-bottom: 1rem;
-  }
-  
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
-  /* Light and Dark Theme Styles */
 body {
-    transition: background 0.3s, color 0.3s;
+  background-color: whitesmoke;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #e0e0e0;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-/* Dark Theme */
-.dark-theme {
-    background-color: #121212;
-    color: white;
+/* Container */
+.container {
+  background: #1e1e1e;
+  padding: 40px 30px;
+  border-radius: 12px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6);
+  width: 360px;
+  animation: fadeInUp 0.8s ease-out;
 }
 
-.dark-theme .card {
-    background-color: #222;
-    color: white;
+/* Heading */
+.container h2 {
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 1.8em;
+  letter-spacing: 1px;
 }
 
-.dark-theme .navbar {
-    background-color: #333 !important;
+/* Form Elements */
+form p {
+  margin-bottom: 20px;
 }
 
-.dark-theme .table {
-    background-color: #222;
-    color: white;
+form input {
+  width: 100%;
+  padding: 12px 15px;
+  margin-top: 5px;
+  border: none;
+  border-radius: 6px;
+  background: #2a2a2a;
+  color: #e0e0e0;
+  font-size: 1em;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
 }
 
-/* Theme Toggle Switch */
-.theme-toggle {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    position: absolute;
-    top: 10px;
-    right: 10px;
+form input:focus {
+  background: #333333;
+  box-shadow: 0 0 8px 0 #00ccaa;
+  outline: none;
 }
 
-.switch {
-    position: relative;
-    display: inline-block;
-    width: 40px;
-    height: 20px;
+/* Button Styling */
+button[type="submit"] {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 6px;
+  background: #00ccaa;
+  color: #121212;
+  font-size: 1.1em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.3s ease;
 }
 
-.switch input {
-    opacity: 0;
+button[type="submit"]:hover {
+  background: #00b39a;
+  transform: translateY(-3px);
+}
+
+button[type="submit"]:active {
+  transform: translateY(0);
+}
+
+/* Animated Underline on Inputs */
+form input {
+  position: relative;
+}
+
+form input:focus::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 2px;
+  background: #00ccaa;
+  animation: underline 0.4s ease-out forwards;
+}
+
+@keyframes underline {
+  from {
     width: 0;
-    height: 0;
+  }
+
+  to {
+    width: 100%;
+  }
 }
 
-.slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #ccc;
-    transition: .4s;
-    border-radius: 20px;
+/* Fade In Up Animation for Container */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.slider:before {
-    position: absolute;
-    content: "";
-    height: 14px;
-    width: 14px;
-    left: 3px;
-    bottom: 3px;
-    background-color: white;
-    transition: .4s;
-    border-radius: 50%;
-}
-
-input:checked + .slider {
-    background-color: #2196F3;
-}
-
-input:checked + .slider:before {
-    transform: translateX(20px);
+/* Responsive Design */
+@media (max-width: 480px) {
+  .container {
+    width: 90%;
+    padding: 30px 20px;
+  }
 }

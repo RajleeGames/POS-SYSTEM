@@ -100,6 +100,7 @@ form input:focus::after {
   from {
     width: 0;
   }
+
   to {
     width: 100%;
   }
@@ -111,6 +112,7 @@ form input:focus::after {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
