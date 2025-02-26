@@ -9,6 +9,21 @@
   <!-- Dashboard Heading -->
   <h2 class="text-center mb-4">Cashier Dashboard</h2>
 
+  <!-- Low Stock Notification -->
+{% if low_stock_products %}
+  <div class="alert alert-warning">
+    <strong>Warning!</strong> The following product(s) are low in stock:
+    <ul>
+      {% for product in low_stock_products %}
+        <li>{{ product.name }} - Stock: {{ product.stock }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  <!-- Audio alert: ensure alert.mp3 exists in your static/sounds folder -->
+  <audio id="lowStockSound" src="{% static 'sounds/alert.mp3' %}" autoplay></audio>
+{% endif %}
+
+
   <!-- Display messages -->
   {% if messages %}
     <ul class="messages">
