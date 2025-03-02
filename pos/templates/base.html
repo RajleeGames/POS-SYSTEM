@@ -37,7 +37,7 @@
       background-color: #2c3e50;
       color: #ecf0f1;
       transition: width 0.3s ease;
-      overflow: hidden;
+      overflow-y: auto;
       z-index: 1000;
       display: flex;
       flex-direction: column;
@@ -100,6 +100,13 @@
     }
     #sidebar.collapsed .menu-text {
       opacity: 0;
+    }
+    .sidebar-nav ul {
+      padding-left: 20px;
+    }
+    .sidebar-nav ul li a {
+      padding: 8px 20px;
+      font-size: 0.9rem;
     }
     .sidebar-footer {
       display: flex;
@@ -305,7 +312,7 @@
           <i class="fas fa-tachometer-alt"></i>
           <span class="menu-text">Dashboard</span>
         </a>
-        <a href="{% url 'sales_history' %}">                       
+        <a href="{% url 'sales_history' %}">
           <i class="fas fa-history"></i>
           <span class="menu-text">Sales History</span>
         </a>
@@ -317,6 +324,10 @@
           <i class="fas fa-chart-pie"></i>
           <span class="menu-text">Enhanced Report</span>
         </a>
+        <a href="{% url 'expense_list' %}">
+          <i class="fas fa-money-bill-wave"></i>
+          <span class="menu-text">Expenses</span>
+        </a>
         <a href="{% url 'product_list' %}">
           <i class="fas fa-boxes"></i>
           <span class="menu-text">Product List</span>
@@ -325,14 +336,82 @@
           <i class="fas fa-address-book"></i>
           <span class="menu-text">Contacts</span>
         </a>
-        <a href="{% url 'settings' %}">
-          <i class="fas fa-cog"></i>
+        <!-- Additional Sidebar Features -->
+        <!-- Reports Submenu -->
+        <a data-toggle="collapse" href="#reportsSubmenu" role="button" aria-expanded="false" aria-controls="reportsSubmenu">
+          <i class="fas fa-file-alt"></i>
+          <span class="menu-text">Reports</span>
+        </a>
+        <div class="collapse" id="reportsSubmenu">
+          <ul class="list-unstyled ml-3">
+            <li><a href="{% url 'sales_history' %}" class="text-white">Sales History</a></li>
+            <li><a href="{% url 'sales_report' %}" class="text-white">Sales Report</a></li>
+            <li><a href="{% url 'enhanced_sales_report' %}" class="text-white">Enhanced Report</a></li>
+            <li><a href="{% url 'expense_list' %}" class="text-white">Expenses Report</a></li>
+            <li><a href="{% url 'profit_loss' %}" class="text-white">Profit &amp; Loss</a></li>
+            <li><a href="{% url 'inventory_report' %}" class="text-white">Inventory Report</a></li>
+          </ul>
+        </div>
+        <!-- Analytics Submenu -->
+        <a data-toggle="collapse" href="#analyticsSubmenu" role="button" aria-expanded="false" aria-controls="analyticsSubmenu">
+          <i class="fas fa-chart-line"></i>
+          <span class="menu-text">Analytics</span>
+        </a>
+        <div class="collapse" id="analyticsSubmenu">
+          <ul class="list-unstyled ml-3">
+            <li><a href="{% url 'top_selling_products' %}" class="text-white">Top Selling Products</a></li>
+            <li><a href="{% url 'sales_by_category' %}" class="text-white">Sales by Category</a></li>
+            <li><a href="{% url 'sales_by_cashier' %}" class="text-white">Sales by Cashier</a></li>
+          </ul>
+        </div>
+        <!-- User Management Submenu -->
+        <a data-toggle="collapse" href="#userManagementSubmenu" role="button" aria-expanded="false" aria-controls="userManagementSubmenu">
+          <i class="fas fa-users-cog"></i>
+          <span class="menu-text">User Management</span>
+        </a>
+        <div class="collapse" id="userManagementSubmenu">
+          <ul class="list-unstyled ml-3">
+            <li><a href="{% url 'user_create_edit' %}" class="text-white">Create/Edit Users</a></li>
+            <li><a href="{% url 'permissions_roles' %}" class="text-white">Permissions &amp; Roles</a></li>
+          </ul>
+        </div>
+        <!-- Inventory Submenu -->
+        <a data-toggle="collapse" href="#inventorySubmenu" role="button" aria-expanded="false" aria-controls="inventorySubmenu">
+          <i class="fas fa-warehouse"></i>
+          <span class="menu-text">Inventory</span>
+        </a>
+        <div class="collapse" id="inventorySubmenu">
+          <ul class="list-unstyled ml-3">
+            <li><a href="{% url 'stock_movement_list' %}" class="text-white">Stock Movements</a></li>
+            <li><a href="{% url 'low_stock_alerts' %}" class="text-white">Low Stock Alerts</a></li>
+            <li><a href="{% url 'supplier_management' %}" class="text-white">Supplier Management</a></li>
+          </ul>
+        </div>
+        <!-- Settings Submenu -->
+        <a data-toggle="collapse" href="#settingsSubmenu" role="button" aria-expanded="false" aria-controls="settingsSubmenu">
+          <i class="fas fa-cogs"></i>
           <span class="menu-text">Settings</span>
         </a>
-        <a href="{% url 'logout' %}">
-          <i class="fas fa-sign-out-alt"></i>
-          <span class="menu-text">Logout</span>
+        <div class="collapse" id="settingsSubmenu">
+          <ul class="list-unstyled ml-3">
+            <li><a href="{% url 'company_info' %}" class="text-white">Company Info</a></li>
+            <li><a href="{% url 'payment_methods' %}" class="text-white">Payment Methods</a></li>
+            <li><a href="{% url 'tax_currency_settings' %}" class="text-white">Tax/Currency Settings</a></li>
+          </ul>
+        </div>
+        <!-- Tools Submenu -->
+        <a data-toggle="collapse" href="#toolsSubmenu" role="button" aria-expanded="false" aria-controls="toolsSubmenu">
+          <i class="fas fa-tools"></i>
+          <span class="menu-text">Tools</span>
         </a>
+        <div class="collapse" id="toolsSubmenu">
+          <ul class="list-unstyled ml-3">
+            <li><a href="{% url 'data_backup' %}" class="text-white">Data Backup/Restore</a></li>
+            <li><a href="{% url 'system_logs' %}" class="text-white">System Logs</a></li>
+            <li><a href="{% url 'notifications' %}" class="text-white">Notifications</a></li>
+          </ul>
+        </div>
+        <!-- End Additional Sidebar Features -->
       </nav>
     </div>
     <div class="sidebar-footer">

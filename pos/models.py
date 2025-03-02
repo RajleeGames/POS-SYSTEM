@@ -215,3 +215,13 @@ class Contact(models.Model):
 
     def __str__(self):
         return self.name
+    
+
+
+class Expense(models.Model):
+    description = models.CharField(max_length=255)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    date = models.DateField(auto_now_add=True)  # Automatically set to today's date
+
+    def __str__(self):
+        return self.description

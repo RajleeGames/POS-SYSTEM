@@ -1,6 +1,8 @@
 from django import forms
 from .models import Customer, Product
 from .models import Contact
+from .models import Expense
+
 
 class CustomerForm(forms.ModelForm):
     class Meta:
@@ -26,3 +28,10 @@ class ContactForm(forms.ModelForm):
             'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter phone'}),
             'message': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Enter message', 'rows': 3}),
         }
+
+
+
+class ExpenseForm(forms.ModelForm):
+    class Meta:
+        model = Expense
+        fields = ['description', 'amount']

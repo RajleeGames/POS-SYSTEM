@@ -5,8 +5,10 @@
   box-sizing: border-box;
 }
 
+/* Background Image */
 body {
-  background-color: whitesmoke;
+  background: url("../images/background_image_logo.jpg") no-repeat center center fixed;
+  background-size: cover;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   color: #e0e0e0;
   height: 100vh;
@@ -48,12 +50,35 @@ form input {
   color: #e0e0e0;
   font-size: 1em;
   transition: background 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
 }
 
 form input:focus {
   background: #333333;
   box-shadow: 0 0 8px 0 #00ccaa;
   outline: none;
+}
+
+/* Animated Underline on Inputs */
+form input:focus::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 2px;
+  background: #00ccaa;
+  animation: underline 0.4s ease-out forwards;
+}
+
+@keyframes underline {
+  from {
+    width: 0;
+  }
+
+  to {
+    width: 100%;
+  }
 }
 
 /* Button Styling */
@@ -78,32 +103,6 @@ button[type="submit"]:hover {
 
 button[type="submit"]:active {
   transform: translateY(0);
-}
-
-/* Animated Underline on Inputs */
-form input {
-  position: relative;
-}
-
-form input:focus::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  bottom: -2px;
-  width: 100%;
-  height: 2px;
-  background: #00ccaa;
-  animation: underline 0.4s ease-out forwards;
-}
-
-@keyframes underline {
-  from {
-    width: 0;
-  }
-
-  to {
-    width: 100%;
-  }
 }
 
 /* Fade In Up Animation for Container */

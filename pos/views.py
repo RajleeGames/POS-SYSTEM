@@ -9,8 +9,13 @@ from django.utils import timezone
 from reportlab.pdfgen import canvas
 import json
 from datetime import timedelta
-from .models import Contact, Sale, SaleItem, Customer, Product, StockMovement
-from .forms import CustomerForm, ProductForm, ContactForm
+from django.template.loader import render_to_string
+from django.db.models.functions import TruncDay, TruncWeek, TruncMonth, TruncYear
+from weasyprint import HTML  # Ensure WeasyPrint is installed in Python 3.13
+
+# Models and Forms
+from .models import Contact, Sale, SaleItem, Customer, Product, StockMovement, Expense
+from .forms import CustomerForm, ProductForm, ContactForm, ExpenseForm
 
 # -------------------------
 # Receipt Views
@@ -38,7 +43,6 @@ def receipt_view(request, sale_id):
         }
         context['fallback_items'] = [fallback_item]
     return render(request, 'pos/receipt_template.html', context)
-
 
 @login_required
 def generate_receipt_pdf(request, sale_id):
@@ -114,15 +118,14 @@ def sales_history(request):
     sales = Sale.objects.all().order_by('-date')
     return render(request, 'pos/sales_history.html', {'sales': sales})
 
-
 def sales_report(request):
     """
     Display the sales report, ordered by the 'date' field.
     """
     today = timezone.localtime(timezone.now()).date()
     first_of_month = today.replace(day=1)
-    last_of_month = today.replace(day=28) + timezone.timedelta(days=4)
-    last_of_month = last_of_month - timezone.timedelta(days=last_of_month.day)
+    last_of_month = today.replace(day=28) + timedelta(days=4)
+    last_of_month = last_of_month - timedelta(days=last_of_month.day)
 
     total_sales_today = Sale.objects.filter(date__date=today).aggregate(Sum('total_price'))['total_price__sum'] or 0
     total_sales_month = Sale.objects.filter(date__date__gte=first_of_month, date__date__lte=last_of_month).aggregate(Sum('total_price'))['total_price__sum'] or 0
@@ -135,7 +138,6 @@ def sales_report(request):
         'total_sales_today': total_sales_today,
         'total_sales_month': total_sales_month
     })
-
 
 def logout_view(request):
     """
@@ -155,14 +157,12 @@ def product_list(request):
     products = Product.objects.all()
     return render(request, 'pos/product_list.html', {'products': products})
 
-
 def view_product(request, product_id):
     """
     View details of a single product.
     """
     product = get_object_or_404(Product, id=product_id)
     return render(request, 'product_detail.html', {'product': product})
-
 
 def add_product(request):
     """
@@ -177,7 +177,6 @@ def add_product(request):
         form = ProductForm()
     return render(request, 'add_product.html', {'form': form})
 
-
 def edit_product(request, product_id):
     """
     Edit an existing product.
@@ -191,7 +190,6 @@ def edit_product(request, product_id):
     else:
         form = ProductForm(instance=product)
     return render(request, 'edit_product.html', {'form': form, 'product': product})
-
 
 def delete_product(request, product_id):
     """
@@ -280,13 +278,11 @@ def pos(request):
             })
     return render(request, 'pos/pos.html', {'products': products, 'customers': customers})
 
-
 def index(request):
     """
     Index page view.
     """
     return render(request, 'pos/index.html')
-
 
 @login_required
 def dashboard(request):
@@ -294,7 +290,6 @@ def dashboard(request):
     Dashboard view.
     """
     return render(request, 'pos/dashboard.html')
-
 
 def add_customer(request):
     """
@@ -310,7 +305,6 @@ def add_customer(request):
     customers = Customer.objects.all()
     return render(request, 'pos/add_customer.html', {'form': form, 'customers': customers})
 
-
 def signup_view(request):
     """
     User signup view.
@@ -323,7 +317,6 @@ def signup_view(request):
     else:
         form = UserCreationForm()
     return render(request, 'registration/signup.html', {'form': form})
-
 
 @login_required
 def make_sale(request):
@@ -419,7 +412,6 @@ def make_sale(request):
 
     return render(request, 'pos/make_sale.html', {'products': products, 'customers': customers})
 
-
 def complete_sale(request):
     """
     Complete Sale view for processing a sale with payment method.
@@ -475,13 +467,11 @@ def complete_sale(request):
         return redirect('sale_success')
     return render(request, 'pos/pos.html')
 
-
 def sale_success(request):
     """
     View to show sale success message.
     """
     return render(request, 'pos/sale_success.html')
-
 
 @login_required
 def cashier_dashboard(request):
@@ -537,7 +527,7 @@ def cashier_dashboard(request):
         'products': products,
         'customers': customers,
         'recent_sales': recent_sales,
-        'low_stock_products': low_stock_products,  # Pass low stock info to the template
+        'low_stock_products': low_stock_products,
     }
     return render(request, 'pos/cashier_dashboard.html', context)
 
@@ -553,7 +543,6 @@ def lookup_by_barcode(request):
     barcode = request.GET.get('barcode', None)
     if barcode:
         try:
-            # Ensure your Product model has a 'barcode' field.
             product = Product.objects.get(barcode=barcode)
             data = {
                 'id': product.id,
@@ -565,7 +554,6 @@ def lookup_by_barcode(request):
         except Product.DoesNotExist:
             return JsonResponse({'status': 'error', 'message': 'Product not found.'})
     return JsonResponse({'status': 'error', 'message': 'No barcode provided.'})
-
 
 def search_products(request):
     """
@@ -584,18 +572,14 @@ def search_products(request):
 
     return JsonResponse({'status': 'success', 'products': product_list})
 
-
 def search_product(request):
     """
     Return a JSON response with products matching the query.
     """
     query = request.GET.get('query', '')
     products = Product.objects.filter(name__icontains=query)[:10]
-
     product_list = [{'name': product.name, 'price': product.price} for product in products]
-
     return JsonResponse({'products': product_list})
-
 
 def add_to_sale(product_id):
     """
@@ -604,28 +588,143 @@ def add_to_sale(product_id):
     get_object_or_404(Product, id=product_id)
     return redirect('cashier_dashboard')
 
+# -------------------------
+# Enhanced Sales Report & Export/Print Views
+# -------------------------
 
+@login_required
 def enhanced_sales_report(request):
     """
-    Render an enhanced sales report with data for daily, weekly, monthly, and yearly sales.
-    (Replace the sample data below with actual queries as needed.)
+    Render an enhanced sales report with actual data for daily, weekly, monthly, and yearly sales,
+    along with aggregated numbers for the current month: total sales, expenses, and net profit.
     """
-    daily_sales = [{"day": "2025-02-01", "total": 150000.00}, {"day": "2025-02-02", "total": 200000.00}, {"day": "2025-02-03", "total": 270000.00}, {"day": "2025-02-04", "total": 300000.00}, {"day": "2025-02-05", "total": 400000.00}, {"day": "2025-02-06", "total": 340000.00}, {"day": "2025-02-07", "total": 500000.00}]
-    weekly_sales = [{"week": "2025-W01", "total": 550000.00}, {"week": "2025-W02", "total": 760000.00}, {"week": "2025-W03", "total": 670000.00}, {"week": "2025-W04", "total": 531500.00}, {"week": "2025-W05", "total": 430000.00}, {"week": "2025-W06", "total": 500000.00}, {"week": "2025-W07", "total": 450000.00}, {"week": "2025-W08", "total": 250000.00}]
-    monthly_sales = [{"month": "2024-01", "total": 5460800.00}, {"month": "2024-02", "total": 4085800.00}, {"month": "2024-03", "total": 1678200.00}, {"month": "2024-04", "total": 3335200.00}, {"month": "2024-05", "total": 3008200.00}, {"month": "2024-06", "total": 4000000.00}, {"month": "2025-07", "total": 3075200.00}, {"month": "2024-08", "total": 2455200.00}, {"month": "2024-09", "total": 2455200.00}, {"month": "2024-10", "total": 2455200.00}, {"month": "2024-11", "total": 2455200.00}, {"month": "2024-12", "total": 2455200.00}, {"month": "2025-01", "total": 2455200.00}, {"month": "2025-02", "total": 2455200.00}]
-    yearly_sales = [{"year": "2024", "total": 214355000.00}, {"year": "2025", "total": 63460000.00}]
+    sales_qs = Sale.objects.all()
+
+    # Daily Sales: Group sales by day
+    daily_sales_qs = sales_qs.annotate(day=TruncDay('date')).values('day').annotate(total=Sum('total_amount')).order_by('day')
+    daily_sales = [{'day': sale['day'].strftime('%Y-%m-%d'), 'total': float(sale['total'])} for sale in daily_sales_qs]
+
+    # Weekly Sales: Group sales by week
+    weekly_sales_qs = sales_qs.annotate(week=TruncWeek('date')).values('week').annotate(total=Sum('total_amount')).order_by('week')
+    weekly_sales = [{'week': sale['week'].strftime('%Y-%m-%d'), 'total': float(sale['total'])} for sale in weekly_sales_qs]
+
+    # Monthly Sales: Group sales by month
+    monthly_sales_qs = sales_qs.annotate(month=TruncMonth('date')).values('month').annotate(total=Sum('total_amount')).order_by('month')
+    monthly_sales = [{'month': sale['month'].strftime('%Y-%m'), 'total': float(sale['total'])} for sale in monthly_sales_qs]
+
+    # Yearly Sales: Group sales by year
+    yearly_sales_qs = sales_qs.annotate(year=TruncYear('date')).values('year').annotate(total=Sum('total_amount')).order_by('year')
+    yearly_sales = [{'year': sale['year'].strftime('%Y'), 'total': float(sale['total'])} for sale in yearly_sales_qs]
+
+    # Aggregated numbers for current month
+    today = timezone.now().date()
+    monthly_sales_total = Sale.objects.filter(date__year=today.year, date__month=today.month).aggregate(total=Sum('total_amount'))['total'] or 0
+    total_expenses = Expense.objects.filter(date__year=today.year, date__month=today.month).aggregate(total=Sum('amount'))['total'] or 0
+    net_profit = monthly_sales_total - total_expenses
+    todays_sales = Sale.objects.filter(date__date=today).aggregate(total=Sum('total_amount'))['total'] or 0
 
     context = {
         "daily_sales_json": json.dumps(daily_sales),
         "weekly_sales_json": json.dumps(weekly_sales),
         "monthly_sales_json": json.dumps(monthly_sales),
         "yearly_sales_json": json.dumps(yearly_sales),
+        "monthly_sales_total": monthly_sales_total,
+        "total_expenses": total_expenses,
+        "net_profit": net_profit,
+        "todays_sales": todays_sales,
     }
-    
     return render(request, "pos/enhanced_sales_report.html", context)
 
+@login_required
+def export_pdf(request):
+    """
+    Export the enhanced sales report as a PDF using WeasyPrint.
+    """
+    sales_qs = Sale.objects.all()
+
+    daily_sales_qs = sales_qs.annotate(day=TruncDay('date')).values('day').annotate(total=Sum('total_amount')).order_by('day')
+    daily_sales = [{'day': sale['day'].strftime('%Y-%m-%d'), 'total': float(sale['total'])} for sale in daily_sales_qs]
+
+    weekly_sales_qs = sales_qs.annotate(week=TruncWeek('date')).values('week').annotate(total=Sum('total_amount')).order_by('week')
+    weekly_sales = [{'week': sale['week'].strftime('%Y-%m-%d'), 'total': float(sale['total'])} for sale in weekly_sales_qs]
+
+    monthly_sales_qs = sales_qs.annotate(month=TruncMonth('date')).values('month').annotate(total=Sum('total_amount')).order_by('month')
+    monthly_sales = [{'month': sale['month'].strftime('%Y-%m'), 'total': float(sale['total'])} for sale in monthly_sales_qs]
+
+    yearly_sales_qs = sales_qs.annotate(year=TruncYear('date')).values('year').annotate(total=Sum('total_amount')).order_by('year')
+    yearly_sales = [{'year': sale['year'].strftime('%Y'), 'total': float(sale['total'])} for sale in yearly_sales_qs]
+
+    today = timezone.now().date()
+    monthly_sales_total = Sale.objects.filter(date__year=today.year, date__month=today.month).aggregate(total=Sum('total_amount'))['total'] or 0
+    total_expenses = Expense.objects.filter(date__year=today.year, date__month=today.month).aggregate(total=Sum('amount'))['total'] or 0
+    net_profit = monthly_sales_total - total_expenses
+    todays_sales = Sale.objects.filter(date__date=today).aggregate(total=Sum('total_amount'))['total'] or 0
+
+    context = {
+        "daily_sales_json": json.dumps(daily_sales),
+        "weekly_sales_json": json.dumps(weekly_sales),
+        "monthly_sales_json": json.dumps(monthly_sales),
+        "yearly_sales_json": json.dumps(yearly_sales),
+        "monthly_sales_total": monthly_sales_total,
+        "total_expenses": total_expenses,
+        "net_profit": net_profit,
+        "todays_sales": todays_sales,
+    }
+    html_string = render_to_string("pos/enhanced_sales_report.html", context)
+    html = HTML(string=html_string)
+    pdf = html.write_pdf()
+    response = HttpResponse(pdf, content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="sales_report.pdf"'
+    return response
+
+@login_required
+def print_enhanced_report(request):
+    """
+    Render a printable version of the enhanced sales report.
+    This view uses a print-optimized template: pos/print_enhanced_report.html.
+    """
+    sales_qs = Sale.objects.all()
+
+    daily_sales_qs = sales_qs.annotate(day=TruncDay('date')).values('day').annotate(total=Sum('total_amount')).order_by('day')
+    daily_sales = [{'day': sale['day'].strftime('%Y-%m-%d'), 'total': float(sale['total'])} for sale in daily_sales_qs]
+
+    weekly_sales_qs = sales_qs.annotate(week=TruncWeek('date')).values('week').annotate(total=Sum('total_amount')).order_by('week')
+    weekly_sales = [{'week': sale['week'].strftime('%Y-%m-%d'), 'total': float(sale['total'])} for sale in weekly_sales_qs]
+
+    monthly_sales_qs = sales_qs.annotate(month=TruncMonth('date')).values('month').annotate(total=Sum('total_amount')).order_by('month')
+    monthly_sales = [{'month': sale['month'].strftime('%Y-%m'), 'total': float(sale['total'])} for sale in monthly_sales_qs]
+
+    yearly_sales_qs = sales_qs.annotate(year=TruncYear('date')).values('year').annotate(total=Sum('total_amount')).order_by('year')
+    yearly_sales = [{'year': sale['year'].strftime('%Y'), 'total': float(sale['total'])} for sale in yearly_sales_qs]
+
+    today = timezone.now().date()
+    monthly_sales_total = Sale.objects.filter(date__year=today.year, date__month=today.month).aggregate(total=Sum('total_amount'))['total'] or 0
+    total_expenses = Expense.objects.filter(date__year=today.year, date__month=today.month).aggregate(total=Sum('amount'))['total'] or 0
+    net_profit = monthly_sales_total - total_expenses
+    todays_sales = Sale.objects.filter(date__date=today).aggregate(total=Sum('total_amount'))['total'] or 0
+
+    context = {
+        "daily_sales_json": json.dumps(daily_sales),
+        "weekly_sales_json": json.dumps(weekly_sales),
+        "monthly_sales_json": json.dumps(monthly_sales),
+        "yearly_sales_json": json.dumps(yearly_sales),
+        "monthly_sales_total": monthly_sales_total,
+        "total_expenses": total_expenses,
+        "net_profit": net_profit,
+        "todays_sales": todays_sales,
+    }
+    return render(request, "pos/print_enhanced_report.html", context)
+
+@login_required
+def print_receipt(request, sale_id):
+    """
+    Render a printable receipt for a given sale using the template pos/print_receipt.html.
+    """
+    sale = get_object_or_404(Sale, id=sale_id)
+    return render(request, "pos/print_receipt.html", {"sale": sale})
+
 # -------------------------
-# Settings View
+# Settings, Contact, and Misc Views
 # -------------------------
 
 @login_required
@@ -634,7 +733,6 @@ def settings_view(request):
     Render the settings page.
     """
     return render(request, 'pos/settings.html')
-
 
 def get_product_details(request):
     """
@@ -652,11 +750,9 @@ def get_product_details(request):
     except Product.DoesNotExist:
         return JsonResponse({"success": False, "message": "Product not found"})
 
-
 def contacts_list(request):
     contacts = Contact.objects.all().order_by('-created_at')
     return render(request, 'pos/contacts_list.html', {'contacts': contacts})
-
 
 def add_contact(request):
     if request.method == 'POST':
@@ -667,7 +763,6 @@ def add_contact(request):
     else:
         form = ContactForm()
     return render(request, 'pos/contact_form.html', {'form': form, 'title': 'Add Contact'})
-
 
 def edit_contact(request, pk):
     contact = get_object_or_404(Contact, pk=pk)
@@ -680,7 +775,6 @@ def edit_contact(request, pk):
         form = ContactForm(instance=contact)
     return render(request, 'pos/contact_form.html', {'form': form, 'title': 'Edit Contact'})
 
-
 def delete_contact(request, pk):
     contact = get_object_or_404(Contact, pk=pk)
     if request.method == 'POST':
@@ -688,7 +782,42 @@ def delete_contact(request, pk):
         return redirect('contacts_list')
     return render(request, 'pos/delete_contact.html', {'contact': contact})
 
-
 def stock_movement_list(request):
     movements = StockMovement.objects.all().order_by('-timestamp')
     return render(request, 'pos/stock_movement.html', {'movements': movements})
+
+# -------------------------
+# Expense Views
+# -------------------------
+
+def add_expense(request):
+    if request.method == "POST":
+        form = ExpenseForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('expense_list')
+    else:
+        form = ExpenseForm()
+    return render(request, 'pos/add_expense.html', {'form': form})
+
+def calculate_monthly_earnings():
+    current_month = timezone.now().month
+    # Aggregate monthly earnings using the total_amount field.
+    earnings = Sale.objects.filter(date__month=current_month).aggregate(total=Sum('total_amount'))['total'] or 0
+    return earnings
+
+def expense_list(request):
+    current_month = timezone.now().month
+    # Retrieve all expenses for the current month.
+    expenses = Expense.objects.filter(date__month=current_month)
+    total_expenses = expenses.aggregate(total=Sum('amount'))['total'] or 0
+    monthly_earnings = calculate_monthly_earnings()
+    net_profit = monthly_earnings - total_expenses
+
+    context = {
+        'expenses': expenses,
+        'total_expenses': total_expenses,
+        'monthly_earnings': monthly_earnings,
+        'net_profit': net_profit,
+    }
+    return render(request, 'pos/expense_list.html', context)

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}Add Expense{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+  <div class="card p-4">
+    <h2 class="text-center">Add Expense</h2>
+    <hr>
+    <form method="POST" class="mt-3">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label for="id_description" class="form-label">Description</label>
+        {{ form.description|add_class:"form-control" }}
+      </div>
+      <div class="mb-3">
+        <label for="id_amount" class="form-label">Amount</label>
+        {{ form.amount|add_class:"form-control" }}
+      </div>
+      <button type="submit" class="btn btn-primary">Add Expense</button>
+    </form>
+    <a href="{% url 'expense_list' %}" class="btn btn-link mt-3">View Expenses</a>
+  </div>
+</div>
+{% endblock %}

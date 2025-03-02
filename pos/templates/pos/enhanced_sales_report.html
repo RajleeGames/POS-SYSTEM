@@ -2,34 +2,137 @@
 {% block title %}Enhanced Sales Report{% endblock %}
 
 {% block content %}
-<h1>Enhanced Sales Report</h1>
+<style>
+  /* Card row styling */
+  .summary-row .card {
+    border-radius: 10px;
+  }
+  /* Chart container styling */
+  .chart-container {
+    position: relative;
+    height: 300px;      /* Chart height */
+    max-width: 100%;    /* Let the column control the width */
+    margin: 0 auto;     /* Center the chart horizontally if narrower than column */
+  }
+</style>
 
-<!-- Daily Sales Chart -->
-<h2>Daily Sales</h2>
-<canvas id="dailySalesChart" width="600" height="300"></canvas>
+<div class="container my-4">
+  <h1 class="text-center mb-4">Enhanced Sales Report</h1>
+  
+  <!-- ==========================
+       1) Summary Cards (KPI)
+       ========================== -->
+  <div class="row mb-4 summary-row">
+    <!-- Card 1: Today's Sales -->
+    <div class="col-md-3 mb-3">
+      <div class="card text-white bg-primary h-100">
+        <div class="card-body">
+          <h5 class="card-title">Today’s Sales</h5>
+          <h3>{{ todays_sales|default:"0" }} Tsh</h3>
+        </div>
+      </div>
+    </div>
+    <!-- Card 2: This Month's Sales -->
+    <div class="col-md-3 mb-3">
+      <div class="card text-white bg-success h-100">
+        <div class="card-body">
+          <h5 class="card-title">This Month</h5>
+          <h3>{{ monthly_sales_total|default:"0" }} Tsh</h3>
+        </div>
+      </div>
+    </div>
+    <!-- Card 3: Expenses -->
+    <div class="col-md-3 mb-3">
+      <div class="card text-white bg-danger h-100">
+        <div class="card-body">
+          <h5 class="card-title">Expenses</h5>
+          <h3>{{ total_expenses|default:"0" }} Tsh</h3>
+        </div>
+      </div>
+    </div>
+    <!-- Card 4: Net Profit -->
+    <div class="col-md-3 mb-3">
+      <div class="card text-white bg-info h-100">
+        <div class="card-body">
+          <h5 class="card-title">Net Profit</h5>
+          <h3>{{ net_profit|default:"0" }} Tsh</h3>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- ==========================
+       2) Two-Column Charts
+       ========================== -->
 
-<!-- Weekly Sales Chart -->
-<h2>Weekly Sales</h2>
-<canvas id="weeklySalesChart" width="600" height="300"></canvas>
+  <!-- Row 1: Daily (Line) & Weekly (Bar) -->
+  <div class="row mb-4">
+    <!-- Daily Sales Chart -->
+    <div class="col-md-6">
+      <div class="chart-container mb-4">
+        <h2 class="text-center">Daily Sales</h2>
+        <canvas id="dailySalesChart"></canvas>
+      </div>
+    </div>
+    <!-- Weekly Sales Chart -->
+    <div class="col-md-6">
+      <div class="chart-container mb-4">
+        <h2 class="text-center">Weekly Sales</h2>
+        <canvas id="weeklySalesChart"></canvas>
+      </div>
+    </div>
+  </div>
 
-<!-- Monthly Sales Chart -->
-<h2>Monthly Sales</h2>
-<canvas id="monthlySalesChart" width="600" height="300"></canvas>
+  <!-- Row 2: Monthly (Line) & Yearly (Bar) -->
+  <div class="row mb-4">
+    <!-- Monthly Sales Chart -->
+    <div class="col-md-6">
+      <div class="chart-container mb-4">
+        <h2 class="text-center">Monthly Sales</h2>
+        <canvas id="monthlySalesChart"></canvas>
+      </div>
+    </div>
+    <!-- Yearly Sales Chart -->
+    <div class="col-md-6">
+      <div class="chart-container mb-4">
+        <h2 class="text-center">Yearly Sales</h2>
+        <canvas id="yearlySalesChart"></canvas>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Row 3: Doughnut Chart Centered -->
+  <div class="row mb-4">
+    <div class="col-md-8 offset-md-2">
+      <div class="chart-container mb-4">
+        <h2 class="text-center">Monthly Sales vs Expenses vs Profit</h2>
+        <canvas id="profitExpensesChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
 
-<!-- Yearly Sales Chart -->
-<h2>Yearly Sales</h2>
-<canvas id="yearlySalesChart" width="600" height="300"></canvas>
-
-<!-- Pass JSON data from Django to JavaScript -->
+<!-- ==========================
+     3) JSON Data for Charts
+     ========================== -->
 <script id="daily-sales-data" type="application/json">{{ daily_sales_json|safe }}</script>
 <script id="weekly-sales-data" type="application/json">{{ weekly_sales_json|safe }}</script>
 <script id="monthly-sales-data" type="application/json">{{ monthly_sales_json|safe }}</script>
 <script id="yearly-sales-data" type="application/json">{{ yearly_sales_json|safe }}</script>
 
-<!-- Chart.js Library -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+<!-- Aggregated values for Doughnut Chart -->
 <script>
+  const monthlySalesTotal = parseFloat("{{ monthly_sales_total|default:'0' }}");
+  const totalExpenses = parseFloat("{{ total_expenses|default:'0' }}");
+  const netProfit = parseFloat("{{ net_profit|default:'0' }}");
+</script>
+
+<!-- ==========================
+     4) Chart.js Library
+     ========================== -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // Helper function to format date strings for daily chart labels
   function formatDate(dateStr) {
     let date = new Date(dateStr);
     return date.toLocaleDateString();
@@ -41,26 +144,15 @@
   const monthlyData = JSON.parse(document.getElementById('monthly-sales-data').textContent);
   const yearlyData = JSON.parse(document.getElementById('yearly-sales-data').textContent);
 
-  // Prepare data for charts
+  /* ===============  DAILY SALES (LINE)  =============== */
   const dailyChartLabels = dailyData.map(item => formatDate(item.day));
   const dailyChartData = dailyData.map(item => parseFloat(item.total));
-
-  const weeklyChartLabels = weeklyData.map(item => item.week);
-  const weeklyChartData = weeklyData.map(item => parseFloat(item.total));
-
-  const monthlyChartLabels = monthlyData.map(item => item.month);
-  const monthlyChartData = monthlyData.map(item => parseFloat(item.total));
-
-  const yearlyChartLabels = yearlyData.map(item => item.year);
-  const yearlyChartData = yearlyData.map(item => parseFloat(item.total));
-
-  // Daily Sales Chart
   new Chart(document.getElementById('dailySalesChart').getContext('2d'), {
     type: 'line',
     data: {
       labels: dailyChartLabels,
       datasets: [{
-        label: 'Daily Sales ($)',
+        label: 'Daily Sales',
         data: dailyChartData,
         backgroundColor: 'rgba(75, 192, 192, 0.2)',
         borderColor: 'rgba(75, 192, 192, 1)',
@@ -69,6 +161,8 @@
       }]
     },
     options: {
+      responsive: true,
+      maintainAspectRatio: false,
       scales: { 
         x: { display: true }, 
         y: { display: true, beginAtZero: true } 
@@ -76,13 +170,15 @@
     }
   });
 
-  // Weekly Sales Chart
+  /* ===============  WEEKLY SALES (BAR)  =============== */
+  const weeklyChartLabels = weeklyData.map(item => item.week);
+  const weeklyChartData = weeklyData.map(item => parseFloat(item.total));
   new Chart(document.getElementById('weeklySalesChart').getContext('2d'), {
     type: 'bar',
     data: {
       labels: weeklyChartLabels,
       datasets: [{
-        label: 'Weekly Sales (Tsh)',
+        label: 'Weekly Sales',
         data: weeklyChartData,
         backgroundColor: 'rgba(153, 102, 255, 0.2)',
         borderColor: 'rgba(153, 102, 255, 1)',
@@ -90,6 +186,8 @@
       }]
     },
     options: {
+      responsive: true,
+      maintainAspectRatio: false,
       scales: { 
         x: { display: true }, 
         y: { display: true, beginAtZero: true } 
@@ -97,13 +195,15 @@
     }
   });
 
-  // Monthly Sales Chart
+  /* ===============  MONTHLY SALES (LINE)  =============== */
+  const monthlyChartLabels = monthlyData.map(item => item.month);
+  const monthlyChartData = monthlyData.map(item => parseFloat(item.total));
   new Chart(document.getElementById('monthlySalesChart').getContext('2d'), {
     type: 'line',
     data: {
       labels: monthlyChartLabels,
       datasets: [{
-        label: 'Monthly Sales (Tsh)',
+        label: 'Monthly Sales',
         data: monthlyChartData,
         backgroundColor: 'rgba(255, 159, 64, 0.2)',
         borderColor: 'rgba(255, 159, 64, 1)',
@@ -112,6 +212,8 @@
       }]
     },
     options: {
+      responsive: true,
+      maintainAspectRatio: false,
       scales: { 
         x: { display: true }, 
         y: { display: true, beginAtZero: true } 
@@ -119,13 +221,15 @@
     }
   });
 
-  // Yearly Sales Chart
+  /* ===============  YEARLY SALES (BAR)  =============== */
+  const yearlyChartLabels = yearlyData.map(item => item.year);
+  const yearlyChartData = yearlyData.map(item => parseFloat(item.total));
   new Chart(document.getElementById('yearlySalesChart').getContext('2d'), {
     type: 'bar',
     data: {
       labels: yearlyChartLabels,
       datasets: [{
-        label: 'Yearly Sales (Tsh)',
+        label: 'Yearly Sales',
         data: yearlyChartData,
         backgroundColor: 'rgba(54, 162, 235, 0.2)',
         borderColor: 'rgba(54, 162, 235, 1)',
@@ -133,9 +237,55 @@
       }]
     },
     options: {
+      responsive: true,
+      maintainAspectRatio: false,
       scales: { 
         x: { display: true }, 
         y: { display: true, beginAtZero: true } 
+      }
+    }
+  });
+
+  /* ===============  DOUGHNUT CHART: SALES vs EXPENSES vs PROFIT  =============== */
+  new Chart(document.getElementById('profitExpensesChart').getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Sales', 'Expenses', 'Profit'],
+      datasets: [{
+        data: [monthlySalesTotal, totalExpenses, netProfit],
+        backgroundColor: [
+          'rgba(75, 192, 192, 0.6)',   // Sales color
+          'rgba(255, 99, 132, 0.6)',  // Expenses color
+          'rgba(54, 162, 235, 0.6)'   // Profit color
+        ],
+        borderColor: [
+          'rgba(75, 192, 192, 1)',
+          'rgba(255, 99, 132, 1)',
+          'rgba(54, 162, 235, 1)'
+        ],
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom' },
+        title: { display: true, text: 'Monthly Sales vs Expenses vs Profit' },
+        tooltip: {
+          callbacks: {
+            /**
+             * Show both value and percentage in the tooltip.
+             */
+            label: function(context) {
+              const label = context.label || '';
+              const value = context.parsed;
+              const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
+              const percentage = ((value / total) * 100).toFixed(2) + '%';
+              return `${label}: ${value} (${percentage})`;
+            }
+          }
+        }
       }
     }
   });

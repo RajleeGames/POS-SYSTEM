@@ -2,34 +2,57 @@
 {% block title %}Enhanced Sales Report{% endblock %}
 
 {% block content %}
-<h1>Enhanced Sales Report</h1>
+<div class="container my-4">
+  <h1 class="text-center mb-4">Enhanced Sales Report</h1>
+  
+  <!-- Daily Sales Chart (Line Chart) -->
+  <div class="chart-container mb-4" style="position: relative; height:150px; width:50%;">
+    <h2 class="text-center">Daily Sales</h2>
+    <canvas id="dailySalesChart"></canvas>
+  </div>
+  
+  <!-- Weekly Sales Chart (Bar Chart) -->
+  <div class="chart-container mb-4" style="position: relative; height:150px; width:50%;">
+    <h2 class="text-center">Weekly Sales</h2>
+    <canvas id="weeklySalesChart"></canvas>
+  </div>
+  
+  <!-- Monthly Sales Chart (Line Chart) -->
+  <div class="chart-container mb-4" style="position: relative; height:150px; width:50%;">
+    <h2 class="text-center">Monthly Sales</h2>
+    <canvas id="monthlySalesChart"></canvas>
+  </div>
+  
+  <!-- Yearly Sales Chart (Bar Chart) -->
+  <div class="chart-container mb-4" style="position: relative; height:150px; width:50%;">
+    <h2 class="text-center">Yearly Sales</h2>
+    <canvas id="yearlySalesChart"></canvas>
+  </div>
+  
+  <!-- Profit vs Expenses Doughnut Chart -->
+  <div class="chart-container mb-4" style="position: relative; height:150px; width:50%;">
+    <h2 class="text-center">Monthly Sales vs Expenses vs Profit</h2>
+    <canvas id="profitExpensesChart"></canvas>
+  </div>
+</div>
 
-<!-- Daily Sales Chart -->
-<h2>Daily Sales</h2>
-<canvas id="dailySalesChart" width="600" height="300"></canvas>
-
-<!-- Weekly Sales Chart -->
-<h2>Weekly Sales</h2>
-<canvas id="weeklySalesChart" width="600" height="300"></canvas>
-
-<!-- Monthly Sales Chart -->
-<h2>Monthly Sales</h2>
-<canvas id="monthlySalesChart" width="600" height="300"></canvas>
-
-<!-- Yearly Sales Chart -->
-<h2>Yearly Sales</h2>
-<canvas id="yearlySalesChart" width="600" height="300"></canvas>
-
-<!-- Pass JSON data from Django to JavaScript -->
+<!-- JSON Data for Sales Charts -->
 <script id="daily-sales-data" type="application/json">{{ daily_sales_json|safe }}</script>
 <script id="weekly-sales-data" type="application/json">{{ weekly_sales_json|safe }}</script>
 <script id="monthly-sales-data" type="application/json">{{ monthly_sales_json|safe }}</script>
 <script id="yearly-sales-data" type="application/json">{{ yearly_sales_json|safe }}</script>
 
+<!-- Aggregated values for Doughnut Chart -->
+<script>
+  const monthlySalesTotal = parseFloat("{{ monthly_sales_total|default:'0' }}");
+  const totalExpenses = parseFloat("{{ total_expenses|default:'0' }}");
+  const netProfit = parseFloat("{{ net_profit|default:'0' }}");
+</script>
+
 <!-- Chart.js Library -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <script>
+  // Helper function to format date strings for daily chart labels
   function formatDate(dateStr) {
     let date = new Date(dateStr);
     return date.toLocaleDateString();
@@ -41,26 +64,16 @@
   const monthlyData = JSON.parse(document.getElementById('monthly-sales-data').textContent);
   const yearlyData = JSON.parse(document.getElementById('yearly-sales-data').textContent);
 
-  // Prepare data for charts
+  // Prepare data for Daily Sales Chart
   const dailyChartLabels = dailyData.map(item => formatDate(item.day));
   const dailyChartData = dailyData.map(item => parseFloat(item.total));
 
-  const weeklyChartLabels = weeklyData.map(item => item.week);
-  const weeklyChartData = weeklyData.map(item => parseFloat(item.total));
-
-  const monthlyChartLabels = monthlyData.map(item => item.month);
-  const monthlyChartData = monthlyData.map(item => parseFloat(item.total));
-
-  const yearlyChartLabels = yearlyData.map(item => item.year);
-  const yearlyChartData = yearlyData.map(item => parseFloat(item.total));
-
-  // Daily Sales Chart
   new Chart(document.getElementById('dailySalesChart').getContext('2d'), {
     type: 'line',
     data: {
       labels: dailyChartLabels,
       datasets: [{
-        label: 'Daily Sales ($)',
+        label: 'Daily Sales',
         data: dailyChartData,
         backgroundColor: 'rgba(75, 192, 192, 0.2)',
         borderColor: 'rgba(75, 192, 192, 1)',
@@ -69,6 +82,8 @@
       }]
     },
     options: {
+      responsive: true,
+      maintainAspectRatio: false,
       scales: { 
         x: { display: true }, 
         y: { display: true, beginAtZero: true } 
@@ -76,13 +91,16 @@
     }
   });
 
-  // Weekly Sales Chart
+  // Prepare data for Weekly Sales Chart
+  const weeklyChartLabels = weeklyData.map(item => item.week);
+  const weeklyChartData = weeklyData.map(item => parseFloat(item.total));
+
   new Chart(document.getElementById('weeklySalesChart').getContext('2d'), {
     type: 'bar',
     data: {
       labels: weeklyChartLabels,
       datasets: [{
-        label: 'Weekly Sales ($)',
+        label: 'Weekly Sales',
         data: weeklyChartData,
         backgroundColor: 'rgba(153, 102, 255, 0.2)',
         borderColor: 'rgba(153, 102, 255, 1)',
@@ -90,6 +108,8 @@
       }]
     },
     options: {
+      responsive: true,
+      maintainAspectRatio: false,
       scales: { 
         x: { display: true }, 
         y: { display: true, beginAtZero: true } 
@@ -97,13 +117,16 @@
     }
   });
 
-  // Monthly Sales Chart
+  // Prepare data for Monthly Sales Chart
+  const monthlyChartLabels = monthlyData.map(item => item.month);
+  const monthlyChartData = monthlyData.map(item => parseFloat(item.total));
+
   new Chart(document.getElementById('monthlySalesChart').getContext('2d'), {
     type: 'line',
     data: {
       labels: monthlyChartLabels,
       datasets: [{
-        label: 'Monthly Sales ($)',
+        label: 'Monthly Sales',
         data: monthlyChartData,
         backgroundColor: 'rgba(255, 159, 64, 0.2)',
         borderColor: 'rgba(255, 159, 64, 1)',
@@ -112,6 +135,8 @@
       }]
     },
     options: {
+      responsive: true,
+      maintainAspectRatio: false,
       scales: { 
         x: { display: true }, 
         y: { display: true, beginAtZero: true } 
@@ -119,13 +144,16 @@
     }
   });
 
-  // Yearly Sales Chart
+  // Prepare data for Yearly Sales Chart
+  const yearlyChartLabels = yearlyData.map(item => item.year);
+  const yearlyChartData = yearlyData.map(item => parseFloat(item.total));
+
   new Chart(document.getElementById('yearlySalesChart').getContext('2d'), {
     type: 'bar',
     data: {
       labels: yearlyChartLabels,
       datasets: [{
-        label: 'Yearly Sales ($)',
+        label: 'Yearly Sales',
         data: yearlyChartData,
         backgroundColor: 'rgba(54, 162, 235, 0.2)',
         borderColor: 'rgba(54, 162, 235, 1)',
@@ -133,9 +161,41 @@
       }]
     },
     options: {
+      responsive: true,
+      maintainAspectRatio: false,
       scales: { 
         x: { display: true }, 
         y: { display: true, beginAtZero: true } 
+      }
+    }
+  });
+
+  // Profit vs Expenses Doughnut Chart
+  new Chart(document.getElementById('profitExpensesChart').getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Sales', 'Expenses', 'Profit'],
+      datasets: [{
+        data: [monthlySalesTotal, totalExpenses, netProfit],
+        backgroundColor: [
+          'rgba(75, 192, 192, 0.6)',
+          'rgba(255, 99, 132, 0.6)',
+          'rgba(54, 162, 235, 0.6)'
+        ],
+        borderColor: [
+          'rgba(75, 192, 192, 1)',
+          'rgba(255, 99, 132, 1)',
+          'rgba(54, 162, 235, 1)'
+        ],
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom' },
+        title: { display: true, text: 'Monthly Sales vs Expenses vs Profit' }
       }
     }
   });
