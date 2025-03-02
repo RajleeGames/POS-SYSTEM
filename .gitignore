@@ -1,0 +1,17 @@
+# Ignore Python virtual environment
+venv/
+env/
+
+# Ignore database files
+db.sqlite3
+
+# Ignore compiled Python files
+__pycache__/
+*.pyc
+*.pyo
+
+# Ignore VS Code settings
+.vscode/
+
+# Ignore flake8 config (optional)
+.flake8
