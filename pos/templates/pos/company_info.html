@@ -3,26 +3,44 @@
 
 {% block content %}
 <div class="container mt-4">
-  <h2>Company Information</h2>
-  <hr>
+  <h2 class="mb-4">Company Information</h2>
+  
+  <div class="row">
+    <!-- Left Column: Current Info -->
+    <div class="col-md-6 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h4 class="card-title">{{ info.company_name }}</h4>
+          {% if info.ceo_image %}
+            <img 
+              src="{{ info.ceo_image.url }}" 
+              alt="CEO Image" 
+              class="img-thumbnail mb-3" 
+              style="max-width: 150px;"
+            >
+          {% endif %}
+          <p><strong>CEO:</strong> {{ info.ceo_name }}</p>
+          <p><strong>Phone:</strong> {{ info.phone }}</p>
+          <p><strong>Email:</strong> {{ info.email }}</p>
+          <p><strong>Address:</strong> {{ info.address }}</p>
+        </div>
+      </div>
+    </div>
 
-  <!-- Display current info -->
-  <div class="mb-4">
-    <h4>{{ info.company_name }}</h4>
-    {% if info.ceo_image %}
-      <img src="{{ info.ceo_image.url }}" alt="CEO Image" style="max-width:150px; border-radius:8px;">
-    {% endif %}
-    <p><strong>CEO:</strong> {{ info.ceo_name }}</p>
-    <p><strong>Phone:</strong> {{ info.phone }}</p>
-    <p><strong>Email:</strong> {{ info.email }}</p>
-    <p><strong>Address:</strong> {{ info.address }}</p>
+    <!-- Right Column: Edit Form -->
+    <div class="col-md-6 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Edit Information</h5>
+          <hr>
+          <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+          </form>
+        </div>
+      </div>
+    </div>
   </div>
-
-  <!-- Edit form -->
-  <form method="POST" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn btn-primary">Save Changes</button>
-  </form>
 </div>
 {% endblock %}
