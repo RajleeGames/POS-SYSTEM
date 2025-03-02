@@ -1,5 +1,5 @@
 # pos/utils.py
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User # type: ignore
 from .models import Notification
 
 def notify_user(user, message):

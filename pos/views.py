@@ -11,7 +11,7 @@ import json
 from datetime import timedelta
 from django.template.loader import render_to_string
 from django.db.models.functions import TruncDay, TruncWeek, TruncMonth, TruncYear
-from weasyprint import HTML  # Ensure WeasyPrint is installed in Python 3.13
+from weasyprint import HTML  # type: ignore
 
 # Models and Forms
 from .models import Contact, Sale, SaleItem, Customer, Product, StockMovement, Expense
