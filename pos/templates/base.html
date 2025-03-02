@@ -359,22 +359,13 @@
         </a>
         <div class="collapse" id="analyticsSubmenu">
           <ul class="list-unstyled ml-3">
-            <li><a href="{% url 'top_selling_products' %}" class="text-white">Top Selling Products</a></li>
-            <li><a href="{% url 'sales_by_category' %}" class="text-white">Sales by Category</a></li>
-            <li><a href="{% url 'sales_by_cashier' %}" class="text-white">Sales by Cashier</a></li>
+          <li><a href="{% url 'top_selling_products' %}" class="text-white">Top Selling Products</a></li>
+          <li><a href="{% url 'sales_by_category' %}" class="text-white">Sales by Category</a></li>
+          <li><a href="{% url 'sales_by_cashier' %}" class="text-white">Sales by Cashier</a></li>
+
           </ul>
         </div>
-        <!-- User Management Submenu -->
-        <a data-toggle="collapse" href="#userManagementSubmenu" role="button" aria-expanded="false" aria-controls="userManagementSubmenu">
-          <i class="fas fa-users-cog"></i>
-          <span class="menu-text">User Management</span>
-        </a>
-        <div class="collapse" id="userManagementSubmenu">
-          <ul class="list-unstyled ml-3">
-            <li><a href="{% url 'user_create_edit' %}" class="text-white">Create/Edit Users</a></li>
-            <li><a href="{% url 'permissions_roles' %}" class="text-white">Permissions &amp; Roles</a></li>
-          </ul>
-        </div>
+    
         <!-- Inventory Submenu -->
         <a data-toggle="collapse" href="#inventorySubmenu" role="button" aria-expanded="false" aria-controls="inventorySubmenu">
           <i class="fas fa-warehouse"></i>
@@ -383,34 +374,25 @@
         <div class="collapse" id="inventorySubmenu">
           <ul class="list-unstyled ml-3">
             <li><a href="{% url 'stock_movement_list' %}" class="text-white">Stock Movements</a></li>
-            <li><a href="{% url 'low_stock_alerts' %}" class="text-white">Low Stock Alerts</a></li>
-            <li><a href="{% url 'supplier_management' %}" class="text-white">Supplier Management</a></li>
+            <li><a href="{% url 'supplier_list' %}" class="text-white">Supplier Management</a></li>
+
           </ul>
         </div>
         <!-- Settings Submenu -->
         <a data-toggle="collapse" href="#settingsSubmenu" role="button" aria-expanded="false" aria-controls="settingsSubmenu">
           <i class="fas fa-cogs"></i>
-          <span class="menu-text">Settings</span>
+          <span class="menu-text">Settings & Tools</span>
         </a>
         <div class="collapse" id="settingsSubmenu">
           <ul class="list-unstyled ml-3">
-            <li><a href="{% url 'company_info' %}" class="text-white">Company Info</a></li>
-            <li><a href="{% url 'payment_methods' %}" class="text-white">Payment Methods</a></li>
-            <li><a href="{% url 'tax_currency_settings' %}" class="text-white">Tax/Currency Settings</a></li>
+            <li><a href="{% url 'company_info' %}">Company Info</a></li>
+            <li><a href="{% url 'payment_method_list' %}">Payment Methods</a></li>
+            <li><a href="{% url 'system_logs' %}">System Logs</a></li>
+
+            
           </ul>
         </div>
-        <!-- Tools Submenu -->
-        <a data-toggle="collapse" href="#toolsSubmenu" role="button" aria-expanded="false" aria-controls="toolsSubmenu">
-          <i class="fas fa-tools"></i>
-          <span class="menu-text">Tools</span>
-        </a>
-        <div class="collapse" id="toolsSubmenu">
-          <ul class="list-unstyled ml-3">
-            <li><a href="{% url 'data_backup' %}" class="text-white">Data Backup/Restore</a></li>
-            <li><a href="{% url 'system_logs' %}" class="text-white">System Logs</a></li>
-            <li><a href="{% url 'notifications' %}" class="text-white">Notifications</a></li>
-          </ul>
-        </div>
+        
         <!-- End Additional Sidebar Features -->
       </nav>
     </div>
@@ -445,17 +427,38 @@
             <span class="slider"></span>
           </label>
         </div>
-        <div class="position-relative mr-3">
-          <a class="nav-link" href="#" id="notificationDropdown" data-toggle="dropdown">
-            <i class="fas fa-bell"></i>
-            <span class="notification-badge">3</span>
-          </a>
-          <div class="dropdown-menu dropdown-menu-right">
-            <a class="dropdown-item" href="#">New sale completed</a>
-            <a class="dropdown-item" href="#">Product low on stock</a>
-            <a class="dropdown-item" href="#">New customer registered</a>
-          </div>
-        </div>
+           <div class="position-relative mr-3">
+  <!-- Notification Bell Dropdown Trigger -->
+  <a class="nav-link" href="#" id="notificationDropdown" data-toggle="dropdown">
+    <i class="fas fa-bell"></i>
+    {% if unread_count > 0 %}
+      <span class="notification-badge">{{ unread_count }}</span>
+    {% endif %}
+  </a>
+
+  <!-- Dropdown Menu -->
+  <div class="dropdown-menu dropdown-menu-right" style="max-width: 300px;" aria-labelledby="notificationDropdown">
+    {% if unread_notifications %}
+      <!-- List Unread Notifications -->
+      {% for notif in unread_notifications %}
+        <a class="dropdown-item text-wrap" href="#">
+          {{ notif.message }}
+          <small class="text-muted d-block">
+            {{ notif.created_at|date:"M d, Y, h:i A" }}
+          </small>
+        </a>
+      {% endfor %}
+      <div class="dropdown-divider"></div>
+      <!-- Mark All as Read -->
+      <a class="dropdown-item text-center" href="{% url 'mark_all_read' %}">Mark All as Read</a>
+      <!-- Clear All Notifications -->
+      <a class="dropdown-item text-center text-danger" href="{% url 'clear_all' %}">Clear All</a>
+    {% else %}
+      <span class="dropdown-item text-muted">No new notifications</span>
+    {% endif %}
+  </div>
+</div>
+
         <div class="user-dropdown dropdown">
           <a class="nav-link dropdown-toggle" href="#" id="userDropdown" data-toggle="dropdown">
             {% if user.is_authenticated and user.profile.profile_picture %}

@@ -6,7 +6,7 @@ from django.conf.urls.static import static
 from .views import product_list, contacts_list, stock_movement_list, add_expense, expense_list
 
 # Placeholder view for additional features
-def placeholder(request):
+def placeholder(_request):
     from django.http import HttpResponse
     return HttpResponse("This page is under construction.")
 
@@ -25,6 +25,8 @@ urlpatterns = [
     path('signup/', views.signup_view, name='signup'),
     path('settings/', views.settings_view, name='settings'),
     path('pos/', views.pos, name='pos'),
+    path('notifications/mark_all_read/', views.mark_all_notifications_read, name='mark_all_read'),
+    path('notifications/clear_all/', views.clear_all_notifications, name='clear_all'),
     
     # AJAX endpoints
     path('lookup_barcode/', views.lookup_by_barcode, name='lookup_barcode'),
@@ -41,34 +43,32 @@ urlpatterns = [
     
     # Additional Sidebar Features
 
-    # Reports (Submenu)
-    path('profit_loss/', placeholder, name='profit_loss'),
-    path('inventory_report/', placeholder, name='inventory_report'),
+    # Reports (Submenu) - Update these to point to your actual views
+    path('profit_loss/', views.profit_loss_report, name='profit_loss'),
+    path('inventory_report/', views.inventory_report, name='inventory_report'),
     
     # Analytics (Submenu)
-    path('top_selling_products/', placeholder, name='top_selling_products'),
-    path('sales_by_category/', placeholder, name='sales_by_category'),
-    path('sales_by_cashier/', placeholder, name='sales_by_cashier'),
+    path('top_selling_products/', views.top_selling_products, name='top_selling_products'),
+    path('sales_by_category/', views.sales_by_category, name='sales_by_category'),
+    path('sales_by_cashier/', views.sales_by_cashier, name='sales_by_cashier'),
     
-    # User Management (Admin only)
-    path('user_create_edit/', placeholder, name='user_create_edit'),
-    path('permissions_roles/', placeholder, name='permissions_roles'),
     
     # Inventory
-    path('low_stock_alerts/', placeholder, name='low_stock_alerts'),
-    path('supplier_management/', placeholder, name='supplier_management'),
+    path('supplier_management/', views.supplier_list, name='supplier_list'),
+    path('supplier_management/add/', views.add_supplier, name='add_supplier'),
+    path('supplier_management/edit/<int:pk>/', views.edit_supplier, name='edit_supplier'),
+    path('supplier_management/delete/<int:pk>/', views.delete_supplier, name='delete_supplier'),
+
     
     # Settings
-    path('company_info/', placeholder, name='company_info'),
-    path('payment_methods/', placeholder, name='payment_methods'),
-    path('tax_currency_settings/', placeholder, name='tax_currency_settings'),
+    path('company_info/', views.company_info_view, name='company_info'),
+    path('payment_methods/', views.payment_method_list, name='payment_method_list'),
+    path('payment_methods/add/', views.add_payment_method, name='add_payment_method'),
+    path('payment_methods/edit/<int:pk>/', views.edit_payment_method, name='edit_payment_method'),
+    path('payment_methods/delete/<int:pk>/', views.delete_payment_method, name='delete_payment_method'),
+    path('system_logs/', views.system_logs_view, name='system_logs'),
     
-    # Tools
-    path('data_backup/', placeholder, name='data_backup'),
-    path('system_logs/', placeholder, name='system_logs'),
-    path('notifications/', placeholder, name='notifications'),
 ]
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-

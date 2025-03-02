@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+  <h2>Suppliers</h2>
+  <a href="{% url 'add_supplier' %}" class="btn btn-primary mb-3">Add New Supplier</a>
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Contact</th>
+        <th>Address</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for supplier in suppliers %}
+      <tr>
+        <td>{{ supplier.name }}</td>
+        <td>{{ supplier.contact }}</td>
+        <td>{{ supplier.address }}</td>
+        <td>
+          <a href="{% url 'edit_supplier' supplier.pk %}" class="btn btn-sm btn-info">Edit</a>
+          <a href="{% url 'delete_supplier' supplier.pk %}" class="btn btn-sm btn-danger">Delete</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

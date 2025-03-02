@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2>System Logs</h2>
+  <hr>
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Login Time</th>
+        <th>IP Address</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for log in logs %}
+      <tr>
+        <td>{{ log.user.username }}</td>
+        <td>{{ log.login_time|date:"M d, Y, h:i A" }}</td>
+        <td>{{ log.ip_address|default_if_none:"-" }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="3">No login logs found.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

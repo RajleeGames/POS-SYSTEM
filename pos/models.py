@@ -9,11 +9,11 @@ from django.urls import reverse
 from django.contrib.auth.models import User
 from django.contrib.auth import get_user_model
 
-# Logger setup
 logger = logging.getLogger(__name__)
 
-
+# ----------------------------------------------------------------
 # Category Model
+# ----------------------------------------------------------------
 class Category(models.Model):
     name = models.CharField(max_length=255, unique=True)
 
@@ -21,7 +21,9 @@ class Category(models.Model):
         return self.name
 
 
+# ----------------------------------------------------------------
 # Supplier Model
+# ----------------------------------------------------------------
 class Supplier(models.Model):
     name = models.CharField(max_length=255)
     contact = models.CharField(max_length=100)
@@ -31,7 +33,9 @@ class Supplier(models.Model):
         return self.name
 
 
+# ----------------------------------------------------------------
 # Product Model
+# ----------------------------------------------------------------
 class Product(models.Model):
     name = models.CharField(max_length=255)
     category = models.ForeignKey(
@@ -52,8 +56,8 @@ class Product(models.Model):
         return self.name
 
     def save(self, *args, **kwargs):
+        # Generate a 12-digit barcode if none is set
         if not self.barcode:
-            # Generate a 12-digit barcode using a UUID integer value
             self.barcode = str(uuid.uuid4().int)[:12]
         super().save(*args, **kwargs)
 
@@ -64,24 +68,56 @@ class Product(models.Model):
         self.save()
 
 
-# Discount Model
-class Discount(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    discount_percentage = models.DecimalField(max_digits=5, decimal_places=2)
-    start_date = models.DateTimeField()
-    end_date = models.DateTimeField()
+# ----------------------------------------------------------------
+# Customer Model
+# ----------------------------------------------------------------
+class Customer(models.Model):
+    name = models.CharField(max_length=255)
+    phone_number = models.CharField(max_length=15, unique=True)
+    email = models.EmailField(unique=True, null=True, blank=True)
+    address = models.TextField(blank=True)
 
     def __str__(self):
-        return f"{self.product.name} - {self.discount_percentage}%"
+        return self.name
 
 
-# Sale Model
-class Sale(models.Model):
-    customer = models.ForeignKey(
-        'Customer', null=True, blank=True, on_delete=models.SET_NULL
+# ----------------------------------------------------------------
+# SaleItem Model (uses a forward reference to 'Sale')
+# ----------------------------------------------------------------
+class SaleItem(models.Model):
+    """
+    For multi-item sales (and now single-item too),
+    each line item references a product, quantity, and total price.
+    """
+    sale = models.ForeignKey(
+        'Sale',  # forward reference, since Sale is defined below
+        on_delete=models.CASCADE,
+        related_name='items'
     )
-    # For single–item sales these fields are used.
-    # For multi–item sales, leave these fields empty and record details via SaleItem.
+    cashier = models.ForeignKey(
+        get_user_model(), on_delete=models.CASCADE, null=True, blank=True
+    )
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField()
+    total_price = models.DecimalField(max_digits=8, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.product.name} - Qty: {self.quantity} - Total: Tsh{self.total_price}"
+
+
+# ----------------------------------------------------------------
+# Sale Model
+# ----------------------------------------------------------------
+class Sale(models.Model):
+    """
+    If it's a single-item sale, 'product' & 'quantity' are set,
+    and we auto-create a matching SaleItem upon first save.
+    For multi-item sales, those details live in SaleItem, and
+    'product'/'quantity' remain blank.
+    """
+    customer = models.ForeignKey(
+        Customer, null=True, blank=True, on_delete=models.SET_NULL
+    )
     product = models.ForeignKey(
         Product, on_delete=models.CASCADE, null=True, blank=True
     )
@@ -89,7 +125,6 @@ class Sale(models.Model):
     total_price = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, null=True
     )
-    # total_amount is used for multi–item sales (or can duplicate single–item totals)
     total_amount = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, null=True
     )
@@ -105,30 +140,45 @@ class Sale(models.Model):
     cashier = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def save(self, *args, **kwargs):
-        # For single–item sales (when product is provided), calculate totals and reduce stock.
+        is_new_sale = self.pk is None  # check if this is a brand-new sale
+
+        # Handle single-item sale logic
         if self.product is not None:
             if not self.quantity:
                 raise ValueError("Quantity cannot be None for a single–item sale.")
             self.total_price = Decimal(self.product.price) * Decimal(self.quantity)
-            # Check for any applicable discount.
-            discount = Discount.objects.filter(
+
+            # Check for any applicable discount
+            discount_qs = Discount.objects.filter(
                 product=self.product,
                 start_date__lte=self.date if self.date else datetime.now(),
                 end_date__gte=self.date if self.date else datetime.now()
-            ).first()
+            )
+            discount = discount_qs.first()
             if discount:
-                self.total_price *= (1 - Decimal(discount.discount_percentage) / 100)
+                discount_factor = (1 - Decimal(discount.discount_percentage) / 100)
+                self.total_price *= discount_factor
                 logger.debug(f"Discount Applied: {discount.discount_percentage}%")
+
             self.total_amount = self.total_price
-            # Reduce stock only on first save.
-            if not self.pk:
-                logger.debug(
-                    f"Reducing stock: Before: {self.product.stock}, Selling: {self.quantity}"
-                )
+
+            # Reduce stock only on the first save
+            if is_new_sale:
+                logger.debug(f"Reducing stock: {self.product.stock} -> {self.product.stock - self.quantity}")
                 self.product.reduce_stock(self.quantity)
-                logger.debug(f"Stock After Sale: {self.product.stock}")
-        # For multi–item sales, assume sale.total_amount is set externally.
+
+        # Save the Sale itself
         super().save(*args, **kwargs)
+
+        # If it's a new single-item sale, ensure a SaleItem exists
+        if is_new_sale and self.product and self.quantity and not self.items.exists():
+            SaleItem.objects.create(
+                sale=self,
+                cashier=self.cashier,
+                product=self.product,
+                quantity=self.quantity,
+                total_price=self.total_price or Decimal('0.00')
+            )
 
     def print_receipt_link(self):
         if self.id:
@@ -147,8 +197,22 @@ class Sale(models.Model):
             return f"Sale #{self.id} - Total: {self.total_amount}"
 
 
-# Stock Movement Model
+# ----------------------------------------------------------------
+# Discount Model
+# ----------------------------------------------------------------
+class Discount(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    discount_percentage = models.DecimalField(max_digits=5, decimal_places=2)
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField()
 
+    def __str__(self):
+        return f"{self.product.name} - {self.discount_percentage}%"
+
+
+# ----------------------------------------------------------------
+# Stock Movement Model
+# ----------------------------------------------------------------
 class StockMovement(models.Model):
     MOVEMENT_TYPES = [
         ('IN', 'Stock In'),
@@ -170,7 +234,7 @@ class StockMovement(models.Model):
         elif self.movement_type == 'OUT':
             self.product.stock -= self.quantity
         elif self.movement_type == 'ADJUST':
-            self.product.stock = self.quantity  # Direct adjustment
+            self.product.stock = self.quantity
         
         self.product.save()
         super().save(*args, **kwargs)
@@ -179,33 +243,9 @@ class StockMovement(models.Model):
         return f"{self.product.name} - {self.movement_type} ({self.quantity})"
 
 
-# Customer Model
-class Customer(models.Model):
-    name = models.CharField(max_length=255)
-    phone_number = models.CharField(max_length=15, unique=True)
-    email = models.EmailField(unique=True, null=True, blank=True)
-    address = models.TextField(blank=True)
-
-    def __str__(self):
-        return self.name
-
-
-# SaleItem Model
-class SaleItem(models.Model):
-    sale = models.ForeignKey(
-        Sale, on_delete=models.CASCADE, related_name='items'
-    )
-    cashier = models.ForeignKey(
-        get_user_model(), on_delete=models.CASCADE, null=True, blank=True
-    )
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    quantity = models.PositiveIntegerField()
-    total_price = models.DecimalField(max_digits=8, decimal_places=2)
-
-    def __str__(self):
-        return f"{self.product.name} - Qty: {self.quantity} - Total: Tsh{self.total_price}"
-
-
+# ----------------------------------------------------------------
+# Contact Model
+# ----------------------------------------------------------------
 class Contact(models.Model):
     name = models.CharField(max_length=200)
     email = models.EmailField()
@@ -215,9 +255,11 @@ class Contact(models.Model):
 
     def __str__(self):
         return self.name
-    
 
 
+# ----------------------------------------------------------------
+# Expense Model
+# ----------------------------------------------------------------
 class Expense(models.Model):
     description = models.CharField(max_length=255)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
@@ -225,3 +267,44 @@ class Expense(models.Model):
 
     def __str__(self):
         return self.description
+
+
+class CompanyInfo(models.Model):
+    company_name = models.CharField(max_length=255, default="Supermarket POS")
+    ceo_name = models.CharField(max_length=255, blank=True)
+    ceo_image = models.ImageField(upload_to='ceo_images/', blank=True, null=True)
+    phone = models.CharField(max_length=50, blank=True)
+    email = models.EmailField(blank=True)
+    address = models.TextField(blank=True)
+
+    def __str__(self):
+        return self.company_name or "Company Info"
+
+
+class LoginLog(models.Model):
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
+    login_time = models.DateTimeField(auto_now_add=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.user.username} logged in at {self.login_time}"
+
+
+class PaymentMethod(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    icon = models.ImageField(upload_to='payment_icons/', blank=True, null=True)
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.name
+    
+
+class Notification(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    message = models.CharField(max_length=255)
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username}: {self.message}"

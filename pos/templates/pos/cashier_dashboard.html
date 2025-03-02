@@ -10,7 +10,7 @@
   <h2 class="text-center mb-4">Cashier Dashboard</h2>
 
   <!-- Low Stock Notification -->
-{% if low_stock_products %}
+  {% if low_stock_products %}
   <div class="alert alert-warning">
     <strong>Warning!</strong> The following product(s) are low in stock:
     <ul>
@@ -21,8 +21,7 @@
   </div>
   <!-- Audio alert: ensure alert.mp3 exists in your static/sounds folder -->
   <audio id="lowStockSound" src="{% static 'sounds/alert.mp3' %}" autoplay></audio>
-{% endif %}
-
+  {% endif %}
 
   <!-- Display messages -->
   {% if messages %}
@@ -57,6 +56,17 @@
       <h3>Make a Sale</h3>
     </div>
     <div class="card-body">
+      <!-- Category Filter Dropdown -->
+      <div class="form-group">
+        <label for="categoryFilter">Filter by Category:</label>
+        <select id="categoryFilter" class="form-control" onchange="filterProducts()">
+          <option value="">All Categories</option>
+          {% for category in categories %}
+            <option value="{{ category.id }}">{{ category.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
       <!-- Product Search with Voice Integration -->
       <div class="input-group mb-3">
         <input type="text" id="productSearch" class="form-control" placeholder="Search for a product..." aria-label="Search Product" onkeyup="filterProducts()">
@@ -77,7 +87,7 @@
           <select name="product" id="product" class="form-control" required>
             <option value="">-- Select Product --</option>
             {% for product in products %}
-              <option value="{{ product.id }}">
+              <option value="{{ product.id }}" data-category="{% if product.category %}{{ product.category.id }}{% else %}0{% endif %}">
                 {{ product.name }} - Tsh{{ product.price }} (Stock: {{ product.stock }})
               </option>
             {% endfor %}
@@ -167,7 +177,7 @@
   </div>
 </div>
 
-<!-- JavaScript for Barcode Scanning, Product Filtering, and Voice Search Integration -->
+<!-- JavaScript for Barcode Scanning, Product Filtering, Voice Search Integration, and Category Filtering -->
 <script>
   // Function to look up a product by barcode via AJAX
   function lookupBarcode() {
@@ -206,20 +216,29 @@
     }
   });
 
-  // Function to filter the product dropdown based on search input
+  // Function to filter the product dropdown based on search input and selected category
   function filterProducts() {
-    var input = document.getElementById("productSearch"),
-        filter = input.value.toUpperCase(),
-        select = document.getElementById("product"),
-        options = select.getElementsByTagName("option");
+    var searchInput = document.getElementById("productSearch");
+    var searchFilter = searchInput.value.toUpperCase();
+    var categorySelect = document.getElementById("categoryFilter");
+    var selectedCategory = categorySelect.value; // category id as string or empty
+    var select = document.getElementById("product");
+    var options = select.getElementsByTagName("option");
+
     for (var i = 0; i < options.length; i++) {
       // Always show the first default option
       if (i === 0) {
         options[i].style.display = "";
         continue;
       }
-      var txtValue = options[i].textContent || options[i].innerText;
-      options[i].style.display = (txtValue.toUpperCase().indexOf(filter) > -1) ? "" : "none";
+      var optionText = options[i].textContent || options[i].innerText;
+      var textMatch = optionText.toUpperCase().indexOf(searchFilter) > -1;
+      
+      // Check category: if no category is selected, or if option's data-category equals selectedCategory
+      var optionCategory = options[i].getAttribute("data-category");
+      var categoryMatch = (selectedCategory === "" || optionCategory === selectedCategory);
+      
+      options[i].style.display = (textMatch && categoryMatch) ? "" : "none";
     }
   }
 
@@ -244,7 +263,6 @@
       const transcript = event.results[0][0].transcript;
       productSearchInput.value = transcript;
       voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
-      // Optionally trigger filtering automatically after voice input:
       filterProducts();
     });
     

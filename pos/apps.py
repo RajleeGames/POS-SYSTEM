@@ -1,6 +1,8 @@
+# pos/apps.py
 from django.apps import AppConfig
 
-
 class PosConfig(AppConfig):
-    default_auto_field = 'django.db.models.BigAutoField'
     name = 'pos'
+
+    def ready(self):
+        import pos.signals  # Keep this if you DO need to load signals on startup

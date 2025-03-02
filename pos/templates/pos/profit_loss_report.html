@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+  <h2 class="mb-4">Profit &amp; Loss Report</h2>
+  
+  <div class="row">
+    <!-- Total Sales -->
+    <div class="col-md-4">
+      <div class="card text-white bg-info mb-3">
+        <div class="card-header">Total Sales</div>
+        <div class="card-body">
+          <h5 class="card-title">{{ total_sales }}</h5>
+          <p class="card-text">Overall revenue from sales.</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Total Expenses -->
+    <div class="col-md-4">
+      <div class="card text-white bg-danger mb-3">
+        <div class="card-header">Total Expenses</div>
+        <div class="card-body">
+          <h5 class="card-title">{{ total_expenses }}</h5>
+          <p class="card-text">All costs incurred this period.</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Net Profit -->
+    <div class="col-md-4">
+      <div class="card text-white bg-success mb-3">
+        <div class="card-header">Net Profit</div>
+        <div class="card-body">
+          <h5 class="card-title">{{ net_profit }}</h5>
+          <p class="card-text">Profit = Sales − Expenses</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2>Company Information</h2>
+  <hr>
+
+  <!-- Display current info -->
+  <div class="mb-4">
+    <h4>{{ info.company_name }}</h4>
+    {% if info.ceo_image %}
+      <img src="{{ info.ceo_image.url }}" alt="CEO Image" style="max-width:150px; border-radius:8px;">
+    {% endif %}
+    <p><strong>CEO:</strong> {{ info.ceo_name }}</p>
+    <p><strong>Phone:</strong> {{ info.phone }}</p>
+    <p><strong>Email:</strong> {{ info.email }}</p>
+    <p><strong>Address:</strong> {{ info.address }}</p>
+  </div>
+
+  <!-- Edit form -->
+  <form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Save Changes</button>
+  </form>
+</div>
+{% endblock %}

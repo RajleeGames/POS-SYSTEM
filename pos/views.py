@@ -16,6 +16,21 @@ from weasyprint import HTML  # Ensure WeasyPrint is installed in Python 3.13
 # Models and Forms
 from .models import Contact, Sale, SaleItem, Customer, Product, StockMovement, Expense
 from .forms import CustomerForm, ProductForm, ContactForm, ExpenseForm
+from .models import  Category  # Ensure Category is imported
+from .models import Supplier
+from .forms import SupplierForm  # We'll create this form
+from .models import CompanyInfo
+from .forms import CompanyInfoForm
+from .models import LoginLog
+from .forms import  PaymentMethodForm
+from .models import PaymentMethod
+from .models import Notification
+from .utils import notify_user 
+
+
+
+
+
 
 # -------------------------
 # Receipt Views
@@ -45,7 +60,7 @@ def receipt_view(request, sale_id):
     return render(request, 'pos/receipt_template.html', context)
 
 @login_required
-def generate_receipt_pdf(request, sale_id):
+def generate_receipt_pdf(_request, sale_id):
     """
     Generate a PDF receipt for the given sale.
     """
@@ -191,7 +206,7 @@ def edit_product(request, product_id):
         form = ProductForm(instance=product)
     return render(request, 'edit_product.html', {'form': form, 'product': product})
 
-def delete_product(request, product_id):
+def delete_product(_request, product_id):
     """
     Delete a product.
     """
@@ -473,17 +488,26 @@ def sale_success(request):
     """
     return render(request, 'pos/sale_success.html')
 
+
 @login_required
 def cashier_dashboard(request):
     """
-    Cashier dashboard view with low stock notifications.
+    Cashier dashboard view with low stock messages (but no notifications for sales).
     """
     products = Product.objects.all()
     customers = Customer.objects.all()
     recent_sales = Sale.objects.order_by('-date')[:10]
+    categories = Category.objects.all()
     
-    # Query products with low stock (threshold: less than 10)
+    # Query products with low stock
     low_stock_products = Product.objects.filter(stock__lt=10)
+    
+    # Instead of notify_user, just use Django messages for low stock
+    if low_stock_products:
+        details = "\n".join([f"• {p.name} - Stock: {p.stock}" for p in low_stock_products])
+        msg = f"The following product(s) are low in stock:\n{details}"
+        messages.warning(request, msg)
+        # NO notify_user call here.
 
     if request.method == "POST":
         product_id = request.POST.get('product')
@@ -495,11 +519,15 @@ def cashier_dashboard(request):
             quantity = int(quantity_str)
             product = Product.objects.get(id=product_id)
         except (ValueError, Product.DoesNotExist):
-            messages.error(request, "Invalid product or quantity.")
+            msg = "Invalid product or quantity."
+            messages.error(request, msg)
+            # NO notify_user here
             return redirect('cashier_dashboard')
         
         if product.stock < quantity:
-            messages.error(request, "Insufficient stock!")
+            msg = "Insufficient stock!"
+            messages.error(request, msg)
+            # NO notify_user here
         else:
             total_price = product.price * quantity
             sale = Sale(
@@ -514,19 +542,25 @@ def cashier_dashboard(request):
                     customer = Customer.objects.get(id=customer_id)
                     sale.customer = customer
                 except Customer.DoesNotExist:
-                    messages.error(request, "Selected customer does not exist.")
+                    msg = "Selected customer does not exist."
+                    messages.error(request, msg)
                     return redirect('cashier_dashboard')
             try:
                 sale.save()
-                messages.success(request, f"Sale completed! Total: Tsh{total_price}")
+                msg = f"Sale completed! Total: Tsh{total_price}"
+                messages.success(request, msg)
+                # NO notify_user here
             except ValueError as e:
-                messages.error(request, str(e))
+                msg = str(e)
+                messages.error(request, msg)
+                # NO notify_user here
             return redirect('cashier_dashboard')
     
     context = {
         'products': products,
         'customers': customers,
         'recent_sales': recent_sales,
+        'categories': categories,
         'low_stock_products': low_stock_products,
     }
     return render(request, 'pos/cashier_dashboard.html', context)
@@ -636,7 +670,7 @@ def enhanced_sales_report(request):
     return render(request, "pos/enhanced_sales_report.html", context)
 
 @login_required
-def export_pdf(request):
+def export_pdf(_request):
     """
     Export the enhanced sales report as a PDF using WeasyPrint.
     """
@@ -821,3 +855,220 @@ def expense_list(request):
         'net_profit': net_profit,
     }
     return render(request, 'pos/expense_list.html', context)
+
+# -----------------------------------------------------
+# NEW VIEWS: Profit & Loss Report, Inventory Report
+# -----------------------------------------------------
+
+@login_required
+def profit_loss_report(request):
+    """
+    A simple profit & loss view:
+    - Sums all sales (total_amount)
+    - Sums all expenses (amount)
+    - Calculates net profit
+    """
+    total_sales = Sale.objects.aggregate(total=Sum('total_amount'))['total'] or 0
+    total_expenses = Expense.objects.aggregate(total=Sum('amount'))['total'] or 0
+    net_profit = total_sales - total_expenses
+
+    context = {
+        'total_sales': total_sales,
+        'total_expenses': total_expenses,
+        'net_profit': net_profit,
+    }
+    return render(request, 'pos/profit_loss_report.html', context)
+
+@login_required
+def inventory_report(request):
+    """
+    An inventory report showing all products and their stock.
+    """
+    products = Product.objects.all().order_by('name')
+    return render(request, 'pos/inventory_report.html', {'products': products})
+
+
+
+
+@login_required
+def top_selling_products(request):
+    """
+    Show the top-selling products based on total quantity sold (and total revenue).
+    """
+    # Group by product name, sum quantity and total_price, then sort descending by total_quantity.
+    top_products = (
+        SaleItem.objects
+        .values('product__name')
+        .annotate(
+            total_quantity=Sum('quantity'),
+            total_revenue=Sum('total_price')
+        )
+        .order_by('-total_quantity')[:10]  # Top 10, adjust as needed
+    )
+
+    context = {
+        'top_products': top_products
+    }
+    return render(request, 'pos/top_selling_products.html', context)
+
+
+@login_required
+def sales_by_category(request):
+    """
+    Group sales by product category, summing total quantity and total revenue.
+    """
+    category_sales = (
+        SaleItem.objects
+        .values('product__category__name')
+        .annotate(
+            total_quantity=Sum('quantity'),
+            total_revenue=Sum('total_price')
+        )
+        .order_by('-total_revenue')
+    )
+
+    context = {
+        'category_sales': category_sales
+    }
+    return render(request, 'pos/sales_by_category.html', context)
+
+
+
+@login_required
+def sales_by_cashier(request):
+    """
+    Group total sales by the user (cashier) who made them, using the 'Sale' model.
+    """
+    cashier_sales = (
+        Sale.objects
+        .values('cashier__username')
+        .annotate(total_sales=Sum('total_amount'))
+        .order_by('-total_sales')
+    )
+    context = {
+        'cashier_sales': cashier_sales
+    }
+    return render(request, 'pos/sales_by_cashier.html', context)
+
+
+
+@login_required
+def supplier_list(request):
+    suppliers = Supplier.objects.all()
+    return render(request, 'pos/supplier_list.html', {'suppliers': suppliers})
+
+@login_required
+def add_supplier(request):
+    if request.method == 'POST':
+        form = SupplierForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('supplier_list')
+    else:
+        form = SupplierForm()
+    return render(request, 'pos/supplier_form.html', {'form': form, 'title': 'Add Supplier'})
+
+@login_required
+def edit_supplier(request, pk):
+    supplier = get_object_or_404(Supplier, pk=pk)
+    if request.method == 'POST':
+        form = SupplierForm(request.POST, instance=supplier)
+        if form.is_valid():
+            form.save()
+            return redirect('supplier_list')
+    else:
+        form = SupplierForm(instance=supplier)
+    return render(request, 'pos/supplier_form.html', {'form': form, 'title': 'Edit Supplier'})
+
+@login_required
+def delete_supplier(request, pk):
+    supplier = get_object_or_404(Supplier, pk=pk)
+    if request.method == 'POST':
+        supplier.delete()
+        return redirect('supplier_list')
+    return render(request, 'pos/supplier_confirm_delete.html', {'supplier': supplier})
+
+
+
+@login_required
+def company_info_view(request):
+    try:
+        info = CompanyInfo.objects.get(pk=1)
+    except CompanyInfo.DoesNotExist:
+        info = CompanyInfo(pk=1)
+
+    if request.method == 'POST':
+        form = CompanyInfoForm(request.POST, request.FILES, instance=info)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Company info updated successfully!")
+            notify_user(request.user, "Company info updated successfully!")
+            return redirect('company_info')
+    else:
+        form = CompanyInfoForm(instance=info)
+
+    return render(request, 'pos/company_info.html', {'form': form, 'info': info})
+
+
+@login_required
+def system_logs_view(request):
+    logs = LoginLog.objects.select_related('user').order_by('-login_time')
+    return render(request, 'pos/system_logs.html', {'logs': logs})
+
+
+@login_required
+def payment_method_list(request):
+    methods = PaymentMethod.objects.all().order_by('name')
+    return render(request, 'pos/payment_method_list.html', {'methods': methods})
+
+@login_required
+def add_payment_method(request):
+    if request.method == 'POST':
+        form = PaymentMethodForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Payment method added successfully.")
+            return redirect('payment_method_list')
+    else:
+        form = PaymentMethodForm()
+    return render(request, 'pos/payment_method_form.html', {'form': form, 'title': 'Add Payment Method'})
+
+@login_required
+def edit_payment_method(request, pk):
+    method = get_object_or_404(PaymentMethod, pk=pk)
+    if request.method == 'POST':
+        form = PaymentMethodForm(request.POST, request.FILES, instance=method)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Payment method updated successfully.")
+            return redirect('payment_method_list')
+    else:
+        form = PaymentMethodForm(instance=method)
+    return render(request, 'pos/payment_method_form.html', {'form': form, 'title': 'Edit Payment Method'})
+
+@login_required
+def delete_payment_method(request, pk):
+    method = get_object_or_404(PaymentMethod, pk=pk)
+    if request.method == 'POST':
+        method.delete()
+        messages.success(request, "Payment method deleted.")
+        return redirect('payment_method_list')
+    return render(request, 'pos/payment_method_confirm_delete.html', {'method': method})
+
+
+
+@login_required
+def mark_all_notifications_read(request):
+    """
+    Mark all unread notifications for this user as read.
+    """
+    Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
+    return redirect(request.META.get('HTTP_REFERER', 'cashier_dashboard'))
+
+@login_required
+def clear_all_notifications(request):
+    """
+    Delete all notifications (read or unread) for this user.
+    """
+    Notification.objects.filter(user=request.user).delete()
+    return redirect(request.META.get('HTTP_REFERER', 'cashier_dashboard'))

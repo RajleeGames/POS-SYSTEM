@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+  <h2 class="mb-4">Sales by Category</h2>
+  
+  <div class="table-responsive">
+    <table class="table table-striped table-bordered">
+      <thead class="thead-dark">
+        <tr>
+          <th>Category</th>
+          <th>Total Quantity</th>
+          <th>Total Revenue</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in category_sales %}
+        <tr>
+          <!-- If your Category model has a different field than 'name', adjust accordingly -->
+          <td>
+            {% if row.product__category__name %}
+              {{ row.product__category__name }}
+            {% else %}
+              No Category
+            {% endif %}
+          </td>
+          <td>{{ row.total_quantity }}</td>
+          <td>{{ row.total_revenue }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2>Payment Methods</h2>
+  <a href="{% url 'add_payment_method' %}" class="btn btn-primary mb-3">Add New Method</a>
+
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Icon</th>
+        <th>Name</th>
+        <th>Description</th>
+        <th>Active</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for method in methods %}
+      <tr>
+        <td>
+          {% if method.icon %}
+            <img src="{{ method.icon.url }}" alt="{{ method.name }}" style="max-width:50px;">
+          {% else %}
+            <span class="text-muted">No icon</span>
+          {% endif %}
+        </td>
+        <td>{{ method.name }}</td>
+        <td>{{ method.description }}</td>
+        <td>{{ method.is_active }}</td>
+        <td>
+          <a href="{% url 'edit_payment_method' method.pk %}" class="btn btn-sm btn-info">Edit</a>
+          <a href="{% url 'delete_payment_method' method.pk %}" class="btn btn-sm btn-danger">Delete</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="5">No payment methods found.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
