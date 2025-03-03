@@ -1,14 +1,42 @@
-# Ignore Python virtual environment
+
+# Ignore Python compiled files
+*.pyc
+*.pyo
+__pycache__/
+
+# Ignore Virtual Environment
 venv/
 env/
 
-# Ignore database files
+# Ignore Database files
+*.sqlite3
 db.sqlite3
 
-# Ignore compiled Python files
-__pycache__/
-*.pyc
-*.pyo
+# Ignore Django static and media files
+staticfiles/
+media/
+
+# Ignore Django migrations cache files
+**/migrations/__pycache__/
+**/migrations/*.pyc
+
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Ignore environment variables
+.env
+*.env
+
+# Ignore log files
+*.log
+logs/
+
+# Ignore IDE and editor files
+.vscode/
+.idea/
+*.swp
+>>>>>>> a002fd1 (Updated .gitignore)
 
 # Ignore VS Code settings
 .vscode/
