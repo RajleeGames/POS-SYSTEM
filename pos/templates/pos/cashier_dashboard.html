@@ -156,7 +156,7 @@
             </td>
             <td>
               {% for item in sale.items.all %}
-                ${{ item.total_price }}<br>
+                Tsh{{ item.total_price }}<br>
               {% endfor %}
             </td>
             <td>{{ sale.payment_method|capfirst }}</td>
